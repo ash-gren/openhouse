@@ -14,7 +14,7 @@
     <style>
         :root { --primary: #2563eb; --accent: #10b981; --warning: #f59e0b; --danger: #ef4444; --dark: #0f172a; --bg: #f8fafc; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
-        body { background: var(--bg); color: #1e293b; transition: background 0.3s; }
+        body { background: var(--bg); color: #1e293b; transition: background 0.3s; overflow-x: hidden; }
         
         /* Navigation */
         nav { background: var(--dark); padding: 0.8rem 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
@@ -24,7 +24,7 @@
         .btn-nav.active { background: var(--primary); color: white; border-color: var(--primary); }
 
         /* Screen Management */
-        .screen { display: none; padding: 1.2rem; max-width: 600px; margin: 0 auto; min-height: 90vh; }
+        .screen { display: none; padding: 1.2rem; width: 100%; max-width: 600px; margin: 0 auto; min-height: 90vh; }
         .screen.active { display: flex; flex-direction: column; }
         .card { background: white; border-radius: 1.2rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 1rem; }
 
@@ -34,26 +34,19 @@
         .btn-main { width: 100%; padding: 1.2rem; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
 
         /* Staff View */
-        .staff-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1rem; }
+        .staff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 1rem; }
         .stat-box { background: white; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; text-align: center; }
         .stat-val { font-size: 1.4rem; font-weight: 900; display: block; }
         .stat-lbl { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
         .guest-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; }
         .guest-row.ready { background: #f0fdf4; border-left: 4px solid var(--accent); }
 
-        /* Display Board */
-        #board-screen { background: #000; max-width: 100%; color: white; }
-        .board-tile { background: #111; padding: 3rem; border-radius: 2rem; text-align: center; border-bottom: 15px solid var(--accent); margin: 15px; }
-
-        /* Notifications */
-        .notif-banner { background: var(--primary); color: white; padding: 8px; text-align: center; font-size: 11px; font-weight: 700; cursor: pointer; }
+        /* Display Board Specific */
+        #board-screen { max-width: 100vw; padding: 0; background: #000; color: white; }
+        .missed-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #334155; }
     </style>
 </head>
 <body>
-
-<div id="notif-prompt" class="notif-banner" style="display:none;" onclick="enableNotifs()">
-    🔔 ENABLE PUSH NOTIFICATIONS FOR NEW GUESTS
-</div>
 
 <nav>
     <div class="logo">OPEN HOUSE 2026</div>
@@ -79,7 +72,7 @@
     <div id="status-view" class="card" style="display:none; text-align:center;">
         <span class="stat-lbl">Your Number</span>
         <h1 class="big-num" id="my-number">--</h1>
-        <div id="my-instruction" style="padding:12px; font-weight:800; border-radius:10px; background:#f1f5f9;">Waiting...</div>
+        <div id="my-instruction" style="padding:15px; font-weight:800; border-radius:12px; background:#f1f5f9; font-size: 1.1rem;">Waiting...</div>
         <button onclick="leaveQueue()" style="margin-top:2rem; background:none; border:none; color:#94a3b8; font-weight:700; cursor:pointer;">Cancel Spot</button>
     </div>
 </div>
@@ -89,7 +82,6 @@
     <div class="staff-grid">
         <div class="stat-box"><span class="stat-lbl">Waiting</span><span id="stat-wait" class="stat-val">0</span></div>
         <div class="stat-box"><span class="stat-lbl">Served</span><span id="stat-done" class="stat-val">0</span></div>
-        <div class="stat-box"><span class="stat-lbl">Avg Min</span><span id="stat-avg" class="stat-val">3.0</span></div>
     </div>
     
     <button class="btn-main" style="background:var(--dark); margin-bottom:1rem;" onclick="callNext()">CALL NEXT GUEST ▶</button>
@@ -115,10 +107,21 @@
 
 <!-- DISPLAY BOARD -->
 <div id="board-screen" class="screen">
-    <div style="padding:4rem 1rem; text-align:center; color:white;">
-        <h1 style="font-size:4rem; font-weight:900;">NOW SERVING</h1>
+    <div style="display: flex; height: 90vh; gap: 20px; padding: 20px;">
+        <!-- MAIN AREA -->
+        <div style="flex: 2.5; background: #111; border-radius: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid #334155;">
+            <h2 style="color: #64748b; font-size: 2rem; margin-bottom: 1rem; letter-spacing: 2px;">NOW SERVING</h2>
+            <div id="board-grid" style="text-align: center; width: 100%;"></div>
+        </div>
+        
+        <!-- SIDEBAR -->
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
+            <div style="background: #1e293b; border-radius: 2rem; padding: 2rem; flex: 1; border-left: 8px solid var(--danger);">
+                <h3 style="color: #ef4444; font-size: 1.5rem; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px;">MISSED CALLS</h3>
+                <div id="missed-list"></div>
+            </div>
+        </div>
     </div>
-    <div id="board-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px; padding:20px;"></div>
 </div>
 
 <!-- AUTH -->
@@ -132,7 +135,7 @@
 
 <script>
 // --- CONFIG ---
-const HIDDEN_KEY = "b3BlbmhvdXNlMjAyNg=="; // openhouse2026
+const HIDDEN_KEY = "b3BlbmhvdXNlMjAyNg=="; 
 const firebaseConfig = {
   apiKey: "AIzaSyAOVUPxOa3SNuM-JP0q1oLdlLRew-o5aqU",
   authDomain: "open-house-6336b.firebaseapp.com",
@@ -147,42 +150,18 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 let queue = [];
-let avgTime = 3.0;
 let isAdmin = false;
-let lastCount = 0;
-
-// --- NOTIFICATIONS ---
-function enableNotifs() {
-    Notification.requestPermission().then(p => { if(p === 'granted') document.getElementById('notif-prompt').style.display='none'; });
-}
-if (Notification.permission === 'default') document.getElementById('notif-prompt').style.display='block';
 
 // --- DATABASE SYNC ---
 db.ref('/').on('value', snap => {
     const data = snap.val() || {};
     queue = data.queue ? Object.values(data.queue).sort((a,b) => a.number - b.number) : [];
-    
-    // Notifications for Staff
-    if(isAdmin && queue.length > lastCount) {
-        if(Notification.permission === 'granted') new Notification("New Guest Joined!");
-    }
-    lastCount = queue.length;
-
-    // Avg Time calculation
-    if(data.history) {
-        const hist = Object.values(data.history).slice(-10);
-        avgTime = (hist.reduce((a,b) => a+b, 0) / hist.length / 60000).toFixed(1);
-    }
-    
     updateUI(data.history ? Object.keys(data.history).length : 0);
 });
 
 function joinQueue() {
     const name = document.getElementById('guest-name').value.trim();
     if(name.length < 2) return;
-    const btn = document.getElementById('join-btn');
-    btn.disabled = true; btn.innerText = "Syncing...";
-
     db.ref('nextNum').transaction(c => (c || 1) + 1, (err, comm, snap) => {
         if(comm) {
             const num = snap.val() - 1;
@@ -198,53 +177,65 @@ function updateUI(servedCount) {
     const me = queue.find(q => q.id === myId);
     const waiting = queue.filter(q => q.status === 'waiting');
     const ready = queue.filter(q => q.status === 'ready');
+    const missed = queue.filter(q => q.status === 'missed');
 
-    // Guest Status
-    document.getElementById('ai-wait-info').innerText = `Est. Wait: ~${Math.round(waiting.length * avgTime)} mins`;
+    // Guest Status Logic
+    document.getElementById('ai-wait-info').innerText = `Current Wait: ${waiting.length} guests`;
     if(me) {
         document.getElementById('reg-view').style.display = 'none';
         document.getElementById('status-view').style.display = 'block';
         document.getElementById('my-number').innerText = me.number;
+        
+        const inst = document.getElementById('my-instruction');
         if(me.status === 'ready') {
-            document.getElementById('my-instruction').innerText = "IT'S YOUR TURN!";
-            document.getElementById('my-instruction').style.background = "var(--accent)";
-            document.getElementById('my-instruction').style.color = "white";
+            inst.innerText = "IT'S YOUR TURN!";
+            inst.style.background = "var(--accent)";
+            inst.style.color = "white";
+            if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
             if(!window.didConfetti) { confetti(); window.didConfetti = true; }
+        } else if (me.status === 'missed') {
+            inst.innerText = "MISSED CALL - PLEASE SEE STAFF";
+            inst.style.background = "var(--danger)";
+            inst.style.color = "white";
         } else {
-            document.getElementById('my-instruction').innerText = `Position: #${waiting.findIndex(x => x.id === myId) + 1}`;
+            inst.innerText = `Position in Line: #${waiting.findIndex(x => x.id === myId) + 1}`;
+            inst.style.background = "#f1f5f9";
+            inst.style.color = "#1e293b";
         }
-    } else {
-        document.getElementById('reg-view').style.display = 'block';
-        document.getElementById('status-view').style.display = 'none';
     }
 
-    // Staff Stats
-    if(document.getElementById('stat-wait')) {
+    // Staff Panel Logic
+    if(isAdmin) {
         document.getElementById('stat-wait').innerText = waiting.length;
         document.getElementById('stat-done').innerText = servedCount;
-        document.getElementById('stat-avg').innerText = avgTime;
+        
+        document.getElementById('staff-list').innerHTML = queue.map(q => `
+            <div class="guest-row ${q.status === 'ready' ? 'ready' : ''}">
+                <div style="font-size:13px;"><b>#${q.number}</b> ${q.name}</div>
+                <div style="display:flex; gap:5px;">
+                    ${q.status === 'ready' ? 
+                        `<button onclick="noShow('${q.id}')" style="border:none; background:var(--danger); color:white; padding:4px 8px; border-radius:4px; font-size:10px;">NO SHOW</button>
+                         <button onclick="finish('${q.id}')" style="border:none; background:var(--accent); color:white; padding:4px 8px; border-radius:4px; font-size:10px;">DONE</button>` : 
+                        `<button onclick="recall('${q.id}')" style="border:none; background:var(--primary); color:white; padding:4px 8px; border-radius:4px; font-size:10px;">${q.status==='missed'?'RE-CALL':'CALL'}</button>`}
+                </div>
+            </div>
+        `).join('');
     }
 
-    // Staff List
-    document.getElementById('staff-list').innerHTML = queue.map(q => `
-        <div class="guest-row ${q.status === 'ready' ? 'ready' : ''}">
-            <div style="font-size:13px;"><b>#${q.number}</b> ${q.name}</div>
-            <div style="display:flex; gap:5px;">
-                ${q.status === 'ready' ? 
-                    `<button onclick="recall('${q.id}')" style="border:none; background:var(--warning); color:white; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:700;">RECALL</button>
-                     <button onclick="finish('${q.id}')" style="border:none; background:var(--accent); color:white; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:700;">DONE</button>` : 
-                    `<button onclick="removeGuest('${q.id}')" style="border:none; background:#f1f5f9; color:#94a3b8; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:700;">DEL</button>`}
-            </div>
-        </div>
-    `).join('') || '<div style="padding:20px; text-align:center; color:#94a3b8; font-size:12px;">Empty</div>';
-
-    // Display Board
+    // Display Board Logic
     document.getElementById('board-grid').innerHTML = ready.map(q => `
-        <div class="board-tile">
-            <h1 style="font-size:10rem; line-height:1; color:var(--accent);">${q.number}</h1>
-            <p style="font-size:2.5rem; font-weight:800; text-transform:uppercase;">${q.name}</p>
+        <div>
+            <h1 style="font-size: 15rem; font-weight: 900; line-height: 1; color: var(--accent); margin: 0;">${q.number}</h1>
+            <p style="font-size: 4rem; font-weight: 800; color: white;">${q.name}</p>
         </div>
-    `).join('');
+    `).join('') || '<div style="color:#334155; font-size:2rem;">Waiting...</div>';
+
+    document.getElementById('missed-list').innerHTML = missed.map(q => `
+        <div class="missed-item">
+            <span style="font-size: 2.5rem; font-weight: 900; color: #ef4444;">#${q.number}</span>
+            <span style="font-size: 1.2rem; font-weight: 600;">${q.name}</span>
+        </div>
+    `).join('') || '<div style="color:#475569; font-size:0.9rem;">None</div>';
 }
 
 // --- OPERATIONS ---
@@ -252,17 +243,14 @@ function callNext() {
     const next = queue.find(q => q.status === 'waiting');
     if(next) db.ref('queue/' + next.id).update({ status: 'ready', calledAt: Date.now() });
 }
-function recall(id) { db.ref('queue/' + id).update({ recallTs: Date.now() }); }
-function finish(id) {
-    const g = queue.find(x => x.id === id);
-    if(g && g.calledAt) db.ref('history').push(Date.now() - g.calledAt);
-    db.ref('queue/' + id).remove();
+function noShow(id) { db.ref('queue/' + id).update({ status: 'missed' }); }
+function recall(id) { 
+    window.didConfetti = false; 
+    db.ref('queue/' + id).update({ status: 'ready', calledAt: Date.now() }); 
 }
-function removeGuest(id) { db.ref('queue/' + id).remove(); }
-function leaveQueue() {
-    const id = localStorage.getItem('pb_user_id');
-    if(id) removeGuest(id);
-    localStorage.clear(); location.reload();
+function finish(id) {
+    db.ref('history').push(Date.now());
+    db.ref('queue/' + id).remove();
 }
 function manualAdd() {
     const name = document.getElementById('manual-name').value;
@@ -270,15 +258,19 @@ function manualAdd() {
     db.ref('nextNum').transaction(c => (c || 1) + 1, (err, comm, snap) => {
         if(comm) {
             const num = snap.val() - 1;
-            db.ref('queue/M' + Date.now()).set({ id: 'M'+Date.now(), name, number: num, status: 'waiting', ts: Date.now() });
+            db.ref('queue/M'+Date.now()).set({ id: 'M'+Date.now(), name, number: num, status: 'waiting', ts: Date.now() });
             document.getElementById('manual-name').value = "";
         }
     });
 }
+function leaveQueue() {
+    const id = localStorage.getItem('pb_user_id');
+    if(id) db.ref('queue/' + id).remove();
+    localStorage.clear(); location.reload();
+}
 function resetSystem() {
-    if(confirm("FULL RESET? All guests and numbers will be wiped.")) {
-        db.ref('queue').remove(); db.ref('history').remove();
-        db.ref('nextNum').set(1).then(() => location.reload());
+    if(confirm("FULL RESET?")) {
+        db.ref('/').set({ nextNum: 1 }).then(() => location.reload());
     }
 }
 
@@ -294,11 +286,11 @@ function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id + '-screen').classList.add('active');
     document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
-    const btnMap = {'guest':'nav-guest', 'staff':'nav-staff', 'board':'nav-board'};
-    if(btnMap[id]) document.getElementById(btnMap[id]).classList.add('active');
+    const bMap = {'guest':'nav-guest', 'staff':'nav-staff', 'board':'nav-board'};
+    if(bMap[id]) document.getElementById(bMap[id]).classList.add('active');
     if(id === 'staff') {
         document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById('qrcode'), { text: window.location.href.split('?')[0], width: 90, height: 90 });
+        new QRCode(document.getElementById('qrcode'), { text: window.location.href, width: 90, height: 90 });
     }
 }
 </script>
