@@ -310,7 +310,17 @@ function leaveQueue() {
 }
 function resetSystem() {
     if(confirm("DANGER: This will wipe the entire queue and reset numbers to 1. Proceed?")) {
-        db.ref('/').set({ nextNum: 1, history: {}, queue: {} }).then(() => location.reload());
+        // We set nextNum to 1 and remove everything else
+        db.ref('/').set({ 
+            nextNum: 1, 
+            queue: {}, 
+            history: {} 
+        }).then(() => {
+            alert("System Cleared. Number reset to 1.");
+            location.reload();
+        }).catch(e => alert("Error: " + e.message));
+    }
+}
     }
 }
 function verifyPass() {
