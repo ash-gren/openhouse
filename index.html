@@ -2,115 +2,133 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Open House 2026 | Photobooth AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Open House 2026 Photobooth</title>
     
-    <!-- Robust Firebase Load -->
+    <!-- Reliable CDNs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     
     <style>
-        :root { --primary: #2563eb; --accent: #10b981; --dark: #0f172a; --bg: #f8fafc; }
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: #1e293b; line-height: 1.5; }
+        :root { --primary: #2563eb; --accent: #10b981; --danger: #ef4444; --dark: #0f172a; --bg: #f8fafc; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg); color: #1e293b; overflow-x: hidden; }
         
-        nav { background: #fff; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .logo { font-weight: 900; color: var(--dark); letter-spacing: -0.5px; }
-        .nav-group { display: flex; gap: 8px; }
-        .btn-nav { padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; color: #64748b; }
-        .btn-nav.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        /* Nav */
+        nav { background: var(--dark); padding: 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .logo { font-weight: 800; color: white; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-group { display: flex; gap: 6px; }
+        .btn-nav { padding: 6px 12px; border-radius: 6px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; font-size: 12px; font-weight: 700; transition: 0.2s; }
+        .btn-nav.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        .screen { display: none; padding: 1.5rem; max-width: 600px; margin: 0 auto; min-height: 90vh; flex-direction: column; }
-        .screen.active { display: flex; }
+        /* General Layout */
+        .screen { display: none; padding: 1rem; max-width: 600px; margin: 0 auto; min-height: 90vh; }
+        .screen.active { display: flex; flex-direction: column; }
+        .card { background: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 1rem; }
         
-        .card { background: #fff; border-radius: 1.25rem; padding: 2rem; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; margin-bottom: 1rem; }
+        /* Staff Command Center */
+        .staff-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+        .stat-box { background: white; padding: 1rem; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; }
+        .stat-val { font-size: 1.8rem; font-weight: 900; color: var(--dark); display: block; }
+        .stat-lbl { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
         
-        /* Stats Dashboard */
-        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1rem; }
-        .stat-item { background: #fff; padding: 1rem; border-radius: 1rem; border: 1px solid #e2e8f0; text-align: center; }
-        .stat-label { font-size: 10px; text-transform: uppercase; color: #94a3b8; font-weight: 800; margin-bottom: 4px; }
-        .stat-val { font-size: 20px; font-weight: 900; color: var(--dark); }
+        .btn-call { width: 100%; padding: 1.5rem; background: var(--dark); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.2rem; cursor: pointer; margin-bottom: 1rem; transition: transform 0.1s; }
+        .btn-call:active { transform: scale(0.98); }
+        
+        .queue-list { border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; background: white; }
+        .guest-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f1f5f9; }
+        .guest-row.ready { background: #f0fdf4; border-left: 4px solid var(--accent); }
+        .btn-action { padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 12px; cursor: pointer; border: none; }
 
-        input { width: 100%; padding: 1rem; margin: 1rem 0; border-radius: 0.75rem; border: 2px solid #e2e8f0; font-size: 16px; outline: none; transition: border 0.2s; }
+        /* Join Form */
+        .join-hero { text-align: center; padding: 2rem 0; }
+        input { width: 100%; padding: 1.2rem; border-radius: 10px; border: 2px solid #e2e8f0; font-size: 1.1rem; margin: 1rem 0; outline: none; }
         input:focus { border-color: var(--primary); }
-        
-        .btn-main { width: 100%; padding: 1.1rem; background: var(--primary); color: #fff; border: none; border-radius: 0.75rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; }
-        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-join { width: 100%; padding: 1.2rem; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
+        .btn-join:disabled { background: #cbd5e1; }
 
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-top: 10px; }
-        .wait-info { background: #eff6ff; color: #1e40af; }
-        
-        #board-screen { background: #000; color: #fff; max-width: 100%; }
-        .board-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 20px; }
-        .tile { background: #111; border-left: 6px solid var(--accent); padding: 30px; border-radius: 1rem; text-align: center; }
-        
-        .list-row { background: #fff; padding: 15px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 20px; border-radius: 50px; font-size: 14px; opacity: 0; transition: 0.3s; z-index: 1000; }
-        .toast.show { opacity: 1; }
+        /* Display Board (Optimized for TV/Monitor) */
+        #board-screen { background: #000; max-width: 100%; padding: 0; }
+        .board-header { padding: 4rem 2rem; text-align: center; color: white; }
+        .board-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; padding: 0 2rem 4rem 2rem; }
+        .board-tile { background: #111; color: white; padding: 3rem; border-radius: 2rem; text-align: center; border: 2px solid #222; border-bottom: 12px solid var(--accent); }
+
+        /* Utility */
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #eff6ff; color: #1e40af; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <nav>
-    <div class="logo">PHOTOBOOTH AI</div>
+    <div class="logo">Photobooth 2026</div>
     <div class="nav-group">
         <button class="btn-nav active" onclick="showScreen('guest')">Join</button>
         <button class="btn-nav" onclick="tryAdmin('staff')">Staff</button>
-        <button class="btn-nav" onclick="tryAdmin('board')">Board</button>
+        <button class="btn-nav" onclick="tryAdmin('board')">Display</button>
     </div>
 </nav>
 
-<div id="auth-screen" class="screen">
-    <div class="card">
-        <h2>🔒 Staff Entry</h2>
-        <input type="password" id="pass-input" placeholder="Password">
-        <button class="btn-main" onclick="verifyPass()">Unlock System</button>
-    </div>
-</div>
-
+<!-- GUEST JOIN -->
 <div id="guest-screen" class="screen active">
-    <div id="reg-view" class="card">
-        <h1>Join the Queue</h1>
-        <p id="ai-global-wait" class="badge wait-info">Calculating wait time...</p>
-        <input type="text" id="guest-name" placeholder="Enter your name" maxlength="15">
-        <button class="btn-main" id="join-btn" onclick="joinQueue()">Join Now</button>
+    <div class="join-hero">
+        <h1 style="font-size: 2.5rem; font-weight: 900; letter-spacing: -1px;">Join the Fun.</h1>
+        <div id="ai-wait-info" class="badge">Calculating Wait Time...</div>
     </div>
     
-    <div id="status-view" class="card" style="display:none;">
-        <div style="font-size:12px; color:#94a3b8; font-weight:800;">YOUR POSITION</div>
-        <div id="my-number" style="font-size: 80px; font-weight: 900; line-height:1; margin:10px 0;">--</div>
-        <div id="my-status-label" class="badge wait-info">Waiting</div>
-        <p id="my-wait-est" style="margin-top:20px; font-weight:600; color:#475569;"></p>
-        <button class="btn-main" style="margin-top:2rem; background:#f1f5f9; color:#64748b;" onclick="leaveQueue()">Leave Queue</button>
+    <div id="reg-view" class="card">
+        <input type="text" id="guest-name" placeholder="Enter your name..." maxlength="15">
+        <button class="btn-join" id="join-btn" onclick="joinQueue()">Get My Number</button>
+    </div>
+    
+    <div id="status-view" class="card" style="display:none; text-align:center;">
+        <span class="stat-lbl">Your Number</span>
+        <h1 id="my-number" style="font-size: 6rem; font-weight: 900; color: var(--primary); line-height: 1;">--</h1>
+        <div id="my-instruction" class="badge" style="font-size:1.1rem; padding: 10px 20px;">Waiting...</div>
+        <button onclick="leaveQueue()" style="margin-top:2rem; background:none; border:none; color:#94a3b8; font-weight:700; cursor:pointer;">Cancel My Spot</button>
     </div>
 </div>
 
+<!-- STAFF COMMAND -->
 <div id="staff-screen" class="screen">
-    <div class="stats-row">
-        <div class="stat-item"><div class="stat-label">Waiting</div><div id="stat-wait" class="stat-val">0</div></div>
-        <div class="stat-item"><div class="stat-label">Ready</div><div id="stat-ready" class="stat-val" style="color:var(--accent)">0</div></div>
-        <div class="stat-item"><div class="stat-label">Avg Min</div><div id="stat-avg" class="stat-val">3.0</div></div>
+    <div class="staff-stats">
+        <div class="stat-box"><span class="stat-lbl">Waiting</span><span id="stat-wait" class="stat-val">0</span></div>
+        <div class="stat-box"><span class="stat-lbl">Avg Mins</span><span id="stat-avg" class="stat-val">3.0</span></div>
     </div>
-    <div class="card">
-        <button class="btn-main" onclick="callNext()" style="font-size:1.2rem;">CALL NEXT GUEST ▶</button>
-        <div id="qrcode" style="display:flex; justify-content:center; margin-top:20px;"></div>
+    
+    <button class="btn-call" onclick="callNext()">CALL NEXT GUEST ▶</button>
+    
+    <div class="queue-list" id="staff-list"></div>
+    
+    <div class="card" style="margin-top:1rem; text-align:center;">
+        <div id="qrcode" style="display:flex; justify-content:center; margin-bottom:10px;"></div>
+        <p class="stat-lbl">Scan to Open App</p>
     </div>
-    <div id="staff-list" style="border-radius:1rem; overflow:hidden; border:1px solid #e2e8f0;"></div>
-    <p onclick="resetAllData()" style="text-align:center; color:#cbd5e1; font-size:10px; margin-top:30px; cursor:pointer;">FACTORY RESET DATABASE</p>
+    
+    <button onclick="resetAllData()" style="margin: 2rem auto; display:block; background:none; border:none; color:#cbd5e1; font-size:11px; font-weight:700; cursor:pointer;">RESET ENTIRE EVENT</button>
 </div>
 
+<!-- DISPLAY BOARD -->
 <div id="board-screen" class="screen">
-    <div style="text-align:center; padding:3rem;"><h1 style="font-size:3rem; font-weight:900;">NOW SERVING</h1></div>
+    <div class="board-header">
+        <h1 style="font-size: 5rem; font-weight: 900;">NOW SERVING</h1>
+    </div>
     <div id="board-grid" class="board-grid"></div>
 </div>
 
-<div id="toast" class="toast"></div>
+<!-- AUTH -->
+<div id="auth-screen" class="screen">
+    <div class="card" style="margin-top: 4rem; text-align:center;">
+        <h2>Staff Access</h2>
+        <input type="password" id="pass-input" placeholder="Password">
+        <button class="btn-join" onclick="verifyPass()">Unlock</button>
+    </div>
+</div>
 
 <script>
-// --- CONFIGURATION ---
-const HIDDEN_KEY = "b3BlbmhvdXNlMjAyNg=="; // password: openhouse2026
+// --- CONFIG ---
+const HIDDEN_KEY = "b3BlbmhvdXNlMjAyNg=="; // openhouse2026
 const firebaseConfig = {
   apiKey: "AIzaSyAOVUPxOa3SNuM-JP0q1oLdlLRew-o5aqU",
   authDomain: "open-house-6336b.firebaseapp.com",
@@ -125,198 +143,144 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 let queue = [];
+let avgTime = 3.0;
 let isAdmin = false;
-let avgTime = 3.0; // Default wait time
 
-// --- REAL-TIME ENGINE ---
+// --- LISTENERS ---
 db.ref('/').on('value', snap => {
     const data = snap.val() || {};
-    
-    // 1. Process Queue
     queue = data.queue ? Object.values(data.queue).sort((a,b) => a.number - b.number) : [];
     
-    // 2. AI Wait Time Predictor (Last 5 sessions)
     if (data.history) {
-        const historyArray = Object.values(data.history);
-        const lastFive = historyArray.slice(-5);
-        const totalMs = lastFive.reduce((a, b) => a + b, 0);
-        avgTime = (totalMs / lastFive.length / 60000).toFixed(1);
+        const hist = Object.values(data.history).slice(-10);
+        avgTime = (hist.reduce((a, b) => a + b, 0) / hist.length / 60000).toFixed(1);
     }
     
-    refreshUI();
+    updateUI();
 });
 
+// --- CORE FUNCTIONS ---
 function joinQueue() {
-    const nameInput = document.getElementById('guest-name');
-    const name = nameInput.value.trim();
-    const btn = document.getElementById('join-btn');
-    
-    if (name.length < 2) return showToast("Enter a longer name");
-    
-    btn.disabled = true;
-    btn.innerText = "Connecting...";
+    const name = document.getElementById('guest-name').value.trim();
+    if (name.length < 2) return alert("Enter a valid name");
 
-    // Atomically increment the ticket number
-    db.ref('nextNum').transaction(current => (current || 1) + 1, (error, committed, snapshot) => {
-        if (committed) {
-            const ticketNum = snapshot.val() - 1;
-            const uniqueId = "G-" + Math.random().toString(36).substr(2, 6).toUpperCase();
-            
-            const guestData = {
-                id: uniqueId,
-                name: name,
-                number: ticketNum,
-                status: 'waiting',
-                ts: Date.now()
-            };
-            
-            db.ref('queue/' + uniqueId).set(guestData).then(() => {
-                localStorage.setItem('pb_user_id', uniqueId);
-                showToast("Success! You're in line.");
-            });
-        } else {
+    const btn = document.getElementById('join-btn');
+    btn.disabled = true;
+    btn.innerText = "Syncing...";
+
+    db.ref('nextNum').transaction(curr => (curr || 1) + 1, (err, comm, snap) => {
+        if (err) {
+            alert("Connection Error. Refresh and try again.");
             btn.disabled = false;
-            btn.innerText = "Join Now";
-            showToast("Error. Try again.");
+            return;
+        }
+        if (comm) {
+            const num = snap.val() - 1;
+            const id = "G" + Math.random().toString(36).substr(2, 5).toUpperCase();
+            
+            db.ref('queue/' + id).set({
+                id, name, number: num, status: 'waiting', ts: Date.now()
+            }).then(() => {
+                localStorage.setItem('pb_user_id', id);
+            }).catch(e => {
+                alert("Submission failed. Check your database rules!");
+                btn.disabled = false;
+            });
         }
     });
 }
 
-function refreshUI() {
+function updateUI() {
     const myId = localStorage.getItem('pb_user_id');
     const me = queue.find(q => q.id === myId);
-    
     const waiting = queue.filter(q => q.status === 'waiting');
     const ready = queue.filter(q => q.status === 'ready');
 
-    // Update Staff Stats
+    // Stats
     if(document.getElementById('stat-wait')) {
-        document.getElementById('stat-wait').textContent = waiting.length;
-        document.getElementById('stat-ready').textContent = ready.length;
-        document.getElementById('stat-avg').textContent = avgTime;
+        document.getElementById('stat-wait').innerText = waiting.length;
+        document.getElementById('stat-avg').innerText = avgTime;
     }
 
-    // Update Global AI Predictor
-    document.getElementById('ai-global-wait').textContent = `Est. Wait: ${Math.round(waiting.length * avgTime)} mins`;
+    // AI Prediction
+    document.getElementById('ai-wait-info').innerText = `Est. Wait: ~${Math.round(waiting.length * avgTime)} mins`;
 
-    // Update Guest View
+    // Guest Status
     if (me) {
         document.getElementById('reg-view').style.display = 'none';
         document.getElementById('status-view').style.display = 'block';
-        document.getElementById('my-number').textContent = me.number;
+        document.getElementById('my-number').innerText = me.number;
         
         if (me.status === 'ready') {
-            document.getElementById('my-status-label').textContent = "READY!";
-            document.getElementById('my-status-label').className = "badge";
-            document.getElementById('my-status-label').style.background = "var(--accent)";
-            document.getElementById('my-status-label').style.color = "white";
-            document.getElementById('my-wait-est').innerHTML = "✨ <b>It's your turn!</b> ✨<br>Go to the booth now.";
-            if(!window.confettiDone) { confetti(); window.confettiDone = true; }
+            document.getElementById('my-instruction').innerText = "GO TO BOOTH NOW!";
+            document.getElementById('my-instruction').style.background = "var(--accent)";
+            document.getElementById('my-instruction').style.color = "white";
+            if(!window.didConfetti) { confetti(); window.didConfetti = true; }
         } else {
-            const pos = waiting.findIndex(q => q.id === myId);
-            document.getElementById('my-wait-est').textContent = `Est. ${Math.round(pos * avgTime)} mins remaining (${pos} people ahead)`;
+            const pos = waiting.findIndex(x => x.id === myId);
+            document.getElementById('my-instruction').innerText = `Your position: #${pos + 1} (~${Math.round(pos * avgTime)} mins)`;
         }
     }
 
-    // Update Staff List
+    // Staff List
     document.getElementById('staff-list').innerHTML = queue.map(q => `
-        <div class="list-row">
-            <div><span style="font-weight:900; color:var(--primary); margin-right:10px;">#${q.number}</span> <b>${q.name}</b></div>
-            <div style="display:flex; gap:10px;">
+        <div class="guest-row ${q.status === 'ready' ? 'ready' : ''}">
+            <div><span style="font-weight:900; color:var(--primary);">#${q.number}</span> <b style="margin-left:10px">${q.name}</b></div>
+            <div>
                 ${q.status === 'ready' ? 
-                    `<button class="btn-nav" style="background:var(--accent); color:white; border:none;" onclick="finishGuest('${q.id}')">FINISH</button>` : 
-                    `<button class="btn-nav" onclick="removeGuest('${q.id}')">REMOVE</button>`
-                }
+                    `<button class="btn-action" style="background:var(--accent); color:white;" onclick="finish('${q.id}')">DONE</button>` : 
+                    `<button class="btn-action" style="background:#f1f5f9; color:#64748b;" onclick="removeGuest('${q.id}')">REMOVE</button>`}
             </div>
         </div>
-    `).join('') || '<div style="padding:40px; text-align:center; color:#cbd5e1;">Queue is currently empty.</div>';
+    `).join('') || '<div style="padding:2rem; text-align:center; opacity:0.5;">Queue is empty</div>';
 
-    // Update Board
+    // Display Board
     document.getElementById('board-grid').innerHTML = ready.map(q => `
-        <div class="tile">
-            <div style="font-size:80px; font-weight:900; color:var(--accent); line-height:1;">${q.number}</div>
-            <div style="font-size:20px; font-weight:700; margin-top:10px; text-transform:uppercase;">${q.name}</div>
+        <div class="board-tile">
+            <h1 style="font-size:10rem; line-height:1; color:var(--accent);">${q.number}</h1>
+            <p style="font-size:2.5rem; font-weight:800; margin-top:1rem; text-transform:uppercase;">${q.name}</p>
         </div>
     `).join('');
 }
 
-// --- STAFF ACTIONS ---
+// --- ACTIONS ---
 function callNext() {
-    const nextInLine = queue.find(q => q.status === 'waiting');
-    if (nextInLine) {
-        db.ref('queue/' + nextInLine.id).update({ 
-            status: 'ready',
-            calledAt: Date.now() 
-        });
-    } else {
-        showToast("No guests in line!");
-    }
+    const next = queue.find(q => q.status === 'waiting');
+    if (next) db.ref('queue/' + next.id).update({ status: 'ready', calledAt: Date.now() });
 }
 
-function finishGuest(id) {
-    const guest = queue.find(q => q.id === id);
-    if (guest && guest.calledAt) {
-        const duration = Date.now() - guest.calledAt;
-        db.ref('history').push(duration);
-    }
+function finish(id) {
+    const g = queue.find(x => x.id === id);
+    if (g && g.calledAt) db.ref('history').push(Date.now() - g.calledAt);
     db.ref('queue/' + id).remove();
 }
 
-function removeGuest(id) {
-    db.ref('queue/' + id).remove();
-}
-
-function leaveQueue() {
+function removeGuest(id) { db.ref('queue/' + id).remove(); }
+function leaveQueue() { 
     const id = localStorage.getItem('pb_user_id');
-    if (id) removeGuest(id);
-    localStorage.removeItem('pb_user_id');
+    if(id) removeGuest(id);
+    localStorage.clear();
     location.reload();
 }
 
-// --- ADMIN & NAVIGATION ---
+// --- NAV/AUTH ---
+function tryAdmin(s) { pending = s; isAdmin ? showScreen(s) : showScreen('auth'); }
 function verifyPass() {
-    const input = document.getElementById('pass-input').value;
-    if (btoa(input) === HIDDEN_KEY) {
-        isAdmin = true;
-        showScreen(pendingTarget);
-        document.getElementById('pass-input').value = "";
-    } else {
-        showToast("Access Denied");
-    }
+    if (btoa(document.getElementById('pass-input').value) === HIDDEN_KEY) {
+        isAdmin = true; showScreen(pending);
+    } else { alert("Wrong Password"); }
 }
-
-function tryAdmin(target) {
-    pendingTarget = target;
-    isAdmin ? showScreen(target) : showScreen('auth');
-}
-
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id + '-screen').classList.add('active');
-    
-    // Update nav buttons
     document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
-    if(id === 'guest') document.querySelector('.btn-nav:nth-child(1)').classList.add('active');
     
-    if (id === 'staff') {
+    if(id === 'staff') {
         document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById('qrcode'), { text: window.location.href, width: 120, height: 120 });
+        new QRCode(document.getElementById('qrcode'), { text: window.location.href, width: 100, height: 100 });
     }
 }
-
-function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-function resetAllData() {
-    if(confirm("DANGER: This will wipe all names and reset the number to 1. Continue?")) {
-        db.ref('/').set({ nextNum: 1 });
-        localStorage.clear();
-        location.reload();
-    }
-}
+function resetAllData() { if(confirm("Wipe all data?")) db.ref('/').set({ nextNum: 1 }); }
 </script>
 </body>
 </html>
