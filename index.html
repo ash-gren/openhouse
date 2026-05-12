@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Open House 2026 Photobooth</title>
+    <title>Open House Photobooth 2026</title>
     
-    <!-- Reliable CDNs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -13,56 +12,43 @@
     
     <style>
         :root { --primary: #2563eb; --accent: #10b981; --danger: #ef4444; --dark: #0f172a; --bg: #f8fafc; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-        body { background: var(--bg); color: #1e293b; overflow-x: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
+        body { background: var(--bg); color: #1e293b; }
         
-        /* Nav */
-        nav { background: var(--dark); padding: 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-        .logo { font-weight: 800; color: white; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+        nav { background: var(--dark); padding: 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-weight: 800; color: white; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
         .nav-group { display: flex; gap: 6px; }
-        .btn-nav { padding: 6px 12px; border-radius: 6px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; font-size: 12px; font-weight: 700; transition: 0.2s; }
+        .btn-nav { padding: 6px 12px; border-radius: 6px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; font-size: 11px; font-weight: 700; }
         .btn-nav.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* General Layout */
         .screen { display: none; padding: 1rem; max-width: 600px; margin: 0 auto; min-height: 90vh; }
         .screen.active { display: flex; flex-direction: column; }
-        .card { background: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 1rem; }
+        .card { background: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 1rem; }
         
-        /* Staff Command Center */
+        /* Staff UI */
         .staff-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
         .stat-box { background: white; padding: 1rem; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; }
         .stat-val { font-size: 1.8rem; font-weight: 900; color: var(--dark); display: block; }
         .stat-lbl { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
         
-        .btn-call { width: 100%; padding: 1.5rem; background: var(--dark); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.2rem; cursor: pointer; margin-bottom: 1rem; transition: transform 0.1s; }
-        .btn-call:active { transform: scale(0.98); }
-        
+        .btn-call { width: 100%; padding: 1.5rem; background: var(--dark); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.2rem; cursor: pointer; margin-bottom: 1rem; }
         .queue-list { border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; background: white; }
         .guest-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f1f5f9; }
         .guest-row.ready { background: #f0fdf4; border-left: 4px solid var(--accent); }
-        .btn-action { padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 12px; cursor: pointer; border: none; }
 
-        /* Join Form */
-        .join-hero { text-align: center; padding: 2rem 0; }
+        /* Join UI */
         input { width: 100%; padding: 1.2rem; border-radius: 10px; border: 2px solid #e2e8f0; font-size: 1.1rem; margin: 1rem 0; outline: none; }
-        input:focus { border-color: var(--primary); }
         .btn-join { width: 100%; padding: 1.2rem; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
-        .btn-join:disabled { background: #cbd5e1; }
-
-        /* Display Board (Optimized for TV/Monitor) */
+        
+        /* Board UI */
         #board-screen { background: #000; max-width: 100%; padding: 0; }
-        .board-header { padding: 4rem 2rem; text-align: center; color: white; }
-        .board-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; padding: 0 2rem 4rem 2rem; }
-        .board-tile { background: #111; color: white; padding: 3rem; border-radius: 2rem; text-align: center; border: 2px solid #222; border-bottom: 12px solid var(--accent); }
-
-        /* Utility */
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #eff6ff; color: #1e40af; margin-top: 5px; }
+        .board-tile { background: #111; color: white; padding: 3rem; border-radius: 2rem; text-align: center; border-bottom: 12px solid var(--accent); margin: 10px; }
     </style>
 </head>
 <body>
 
 <nav>
-    <div class="logo">Photobooth 2026</div>
+    <div class="logo">OPEN HOUSE 2026</div>
     <div class="nav-group">
         <button class="btn-nav active" onclick="showScreen('guest')">Join</button>
         <button class="btn-nav" onclick="tryAdmin('staff')">Staff</button>
@@ -70,65 +56,56 @@
     </div>
 </nav>
 
-<!-- GUEST JOIN -->
+<!-- GUEST SCREEN -->
 <div id="guest-screen" class="screen active">
-    <div class="join-hero">
-        <h1 style="font-size: 2.5rem; font-weight: 900; letter-spacing: -1px;">Join the Fun.</h1>
-        <div id="ai-wait-info" class="badge">Calculating Wait Time...</div>
+    <div style="text-align:center; padding: 2rem 0;">
+        <h1 style="font-size: 2rem; font-weight: 900;">Join the Line</h1>
+        <p id="ai-wait-info" style="color:var(--primary); font-weight:700;">Calculating...</p>
     </div>
     
     <div id="reg-view" class="card">
-        <input type="text" id="guest-name" placeholder="Enter your name..." maxlength="15">
+        <input type="text" id="guest-name" placeholder="Your Name" maxlength="15">
         <button class="btn-join" id="join-btn" onclick="joinQueue()">Get My Number</button>
     </div>
     
     <div id="status-view" class="card" style="display:none; text-align:center;">
-        <span class="stat-lbl">Your Number</span>
-        <h1 id="my-number" style="font-size: 6rem; font-weight: 900; color: var(--primary); line-height: 1;">--</h1>
-        <div id="my-instruction" class="badge" style="font-size:1.1rem; padding: 10px 20px;">Waiting...</div>
-        <button onclick="leaveQueue()" style="margin-top:2rem; background:none; border:none; color:#94a3b8; font-weight:700; cursor:pointer;">Cancel My Spot</button>
+        <h1 id="my-number" style="font-size: 6rem; font-weight: 900; color: var(--primary);">--</h1>
+        <div id="my-instruction" style="padding:10px; font-weight:700; border-radius:8px; background:#f1f5f9;">Waiting...</div>
+        <button onclick="leaveQueue()" style="margin-top:2rem; background:none; border:none; color:#94a3b8; cursor:pointer;">Cancel Spot</button>
     </div>
 </div>
 
-<!-- STAFF COMMAND -->
+<!-- STAFF SCREEN -->
 <div id="staff-screen" class="screen">
     <div class="staff-stats">
         <div class="stat-box"><span class="stat-lbl">Waiting</span><span id="stat-wait" class="stat-val">0</span></div>
         <div class="stat-box"><span class="stat-lbl">Avg Mins</span><span id="stat-avg" class="stat-val">3.0</span></div>
     </div>
-    
-    <button class="btn-call" onclick="callNext()">CALL NEXT GUEST ▶</button>
-    
+    <button class="btn-call" onclick="callNext()">CALL NEXT ▶</button>
     <div class="queue-list" id="staff-list"></div>
-    
     <div class="card" style="margin-top:1rem; text-align:center;">
         <div id="qrcode" style="display:flex; justify-content:center; margin-bottom:10px;"></div>
-        <p class="stat-lbl">Scan to Open App</p>
     </div>
-    
-    <button onclick="resetAllData()" style="margin: 2rem auto; display:block; background:none; border:none; color:#cbd5e1; font-size:11px; font-weight:700; cursor:pointer;">RESET ENTIRE EVENT</button>
+    <button onclick="resetAllData()" style="margin-top:2rem; color:#cbd5e1; background:none; border:none; cursor:pointer;">RESET ALL DATA</button>
 </div>
 
-<!-- DISPLAY BOARD -->
+<!-- BOARD SCREEN -->
 <div id="board-screen" class="screen">
-    <div class="board-header">
-        <h1 style="font-size: 5rem; font-weight: 900;">NOW SERVING</h1>
-    </div>
-    <div id="board-grid" class="board-grid"></div>
+    <div style="padding: 3rem; text-align: center; color: white;"><h1>NOW SERVING</h1></div>
+    <div id="board-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));"></div>
 </div>
 
-<!-- AUTH -->
+<!-- AUTH SCREEN -->
 <div id="auth-screen" class="screen">
     <div class="card" style="margin-top: 4rem; text-align:center;">
-        <h2>Staff Access</h2>
+        <h2>Staff Login</h2>
         <input type="password" id="pass-input" placeholder="Password">
         <button class="btn-join" onclick="verifyPass()">Unlock</button>
     </div>
 </div>
 
 <script>
-// --- CONFIG ---
-const HIDDEN_KEY = "b3BlbmhvdXNlMjAyNg=="; // openhouse2026
+const HIDDEN_KEY = "b3BlbmhvdXNlMjAyNg==";
 const firebaseConfig = {
   apiKey: "AIzaSyAOVUPxOa3SNuM-JP0q1oLdlLRew-o5aqU",
   authDomain: "open-house-6336b.firebaseapp.com",
@@ -141,51 +118,49 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-
 let queue = [];
 let avgTime = 3.0;
 let isAdmin = false;
 
-// --- LISTENERS ---
+// --- AUTO-SYNC RESCUE ---
+db.ref('.info/connected').on('value', snap => {
+    if (snap.val() === false) console.warn("Searching for connection...");
+});
+
 db.ref('/').on('value', snap => {
     const data = snap.val() || {};
     queue = data.queue ? Object.values(data.queue).sort((a,b) => a.number - b.number) : [];
-    
     if (data.history) {
         const hist = Object.values(data.history).slice(-10);
         avgTime = (hist.reduce((a, b) => a + b, 0) / hist.length / 60000).toFixed(1);
     }
-    
     updateUI();
 });
 
-// --- CORE FUNCTIONS ---
 function joinQueue() {
     const name = document.getElementById('guest-name').value.trim();
-    if (name.length < 2) return alert("Enter a valid name");
+    if (name.length < 2) return;
 
     const btn = document.getElementById('join-btn');
     btn.disabled = true;
     btn.innerText = "Syncing...";
 
-    db.ref('nextNum').transaction(curr => (curr || 1) + 1, (err, comm, snap) => {
-        if (err) {
-            alert("Connection Error. Refresh and try again.");
+    // FAIL-SAFE: If it takes more than 5s, unlock the button
+    const timeout = setTimeout(() => {
+        if (btn.disabled) {
             btn.disabled = false;
-            return;
+            btn.innerText = "Try Again (Timeout)";
         }
+    }, 5000);
+
+    db.ref('nextNum').transaction(curr => (curr || 1) + 1, (err, comm, snap) => {
+        clearTimeout(timeout);
         if (comm) {
             const num = snap.val() - 1;
             const id = "G" + Math.random().toString(36).substr(2, 5).toUpperCase();
-            
-            db.ref('queue/' + id).set({
-                id, name, number: num, status: 'waiting', ts: Date.now()
-            }).then(() => {
-                localStorage.setItem('pb_user_id', id);
-            }).catch(e => {
-                alert("Submission failed. Check your database rules!");
-                btn.disabled = false;
-            });
+            db.ref('queue/' + id).set({ id, name, number: num, status: 'waiting', ts: Date.now() })
+              .then(() => localStorage.setItem('pb_user_id', id))
+              .catch(() => { btn.disabled = false; btn.innerText = "Error (Check Rules)"; });
         }
     });
 }
@@ -196,54 +171,36 @@ function updateUI() {
     const waiting = queue.filter(q => q.status === 'waiting');
     const ready = queue.filter(q => q.status === 'ready');
 
-    // Stats
     if(document.getElementById('stat-wait')) {
         document.getElementById('stat-wait').innerText = waiting.length;
         document.getElementById('stat-avg').innerText = avgTime;
     }
 
-    // AI Prediction
     document.getElementById('ai-wait-info').innerText = `Est. Wait: ~${Math.round(waiting.length * avgTime)} mins`;
 
-    // Guest Status
     if (me) {
         document.getElementById('reg-view').style.display = 'none';
         document.getElementById('status-view').style.display = 'block';
         document.getElementById('my-number').innerText = me.number;
-        
-        if (me.status === 'ready') {
-            document.getElementById('my-instruction').innerText = "GO TO BOOTH NOW!";
-            document.getElementById('my-instruction').style.background = "var(--accent)";
-            document.getElementById('my-instruction').style.color = "white";
-            if(!window.didConfetti) { confetti(); window.didConfetti = true; }
-        } else {
-            const pos = waiting.findIndex(x => x.id === myId);
-            document.getElementById('my-instruction').innerText = `Your position: #${pos + 1} (~${Math.round(pos * avgTime)} mins)`;
-        }
+        document.getElementById('my-instruction').innerText = me.status === 'ready' ? "GO NOW!" : `Position: #${waiting.findIndex(x => x.id === myId) + 1}`;
+        if(me.status === 'ready' && !window.didConfetti) { confetti(); window.didConfetti = true; }
     }
 
-    // Staff List
     document.getElementById('staff-list').innerHTML = queue.map(q => `
         <div class="guest-row ${q.status === 'ready' ? 'ready' : ''}">
-            <div><span style="font-weight:900; color:var(--primary);">#${q.number}</span> <b style="margin-left:10px">${q.name}</b></div>
-            <div>
-                ${q.status === 'ready' ? 
-                    `<button class="btn-action" style="background:var(--accent); color:white;" onclick="finish('${q.id}')">DONE</button>` : 
-                    `<button class="btn-action" style="background:#f1f5f9; color:#64748b;" onclick="removeGuest('${q.id}')">REMOVE</button>`}
-            </div>
+            <div><b>#${q.number}</b> ${q.name}</div>
+            <button onclick="${q.status === 'ready' ? `finish('${q.id}')` : `removeGuest('${q.id}')`}" 
+                    style="border:none; padding:5px 10px; border-radius:4px; font-weight:700;">
+                ${q.status === 'ready' ? 'DONE' : 'DEL'}
+            </button>
         </div>
-    `).join('') || '<div style="padding:2rem; text-align:center; opacity:0.5;">Queue is empty</div>';
+    `).join('') || '<p style="padding:1rem; text-align:center;">Empty</p>';
 
-    // Display Board
     document.getElementById('board-grid').innerHTML = ready.map(q => `
-        <div class="board-tile">
-            <h1 style="font-size:10rem; line-height:1; color:var(--accent);">${q.number}</h1>
-            <p style="font-size:2.5rem; font-weight:800; margin-top:1rem; text-transform:uppercase;">${q.name}</p>
-        </div>
+        <div class="board-tile"><h1>${q.number}</h1><p>${q.name}</p></div>
     `).join('');
 }
 
-// --- ACTIONS ---
 function callNext() {
     const next = queue.find(q => q.status === 'waiting');
     if (next) db.ref('queue/' + next.id).update({ status: 'ready', calledAt: Date.now() });
@@ -262,8 +219,6 @@ function leaveQueue() {
     localStorage.clear();
     location.reload();
 }
-
-// --- NAV/AUTH ---
 function tryAdmin(s) { pending = s; isAdmin ? showScreen(s) : showScreen('auth'); }
 function verifyPass() {
     if (btoa(document.getElementById('pass-input').value) === HIDDEN_KEY) {
@@ -274,13 +229,19 @@ function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id + '-screen').classList.add('active');
     document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
-    
     if(id === 'staff') {
         document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById('qrcode'), { text: window.location.href, width: 100, height: 100 });
+        new QRCode(document.getElementById('qrcode'), { text: window.location.href, width: 80, height: 80 });
     }
 }
-function resetAllData() { if(confirm("Wipe all data?")) db.ref('/').set({ nextNum: 1 }); }
+function resetAllData() {
+    if(confirm("Wipe everything?")) {
+        // This now works because the rules allow setting nextNum back to 1
+        db.ref('/').set({ nextNum: 1 }); 
+        localStorage.clear();
+        location.reload();
+    }
+}
 </script>
 </body>
 </html>
