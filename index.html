@@ -3,77 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photobooth AI | Open House 2026</title>
-    <!-- Use Standard CDN scripts for GitHub/Vercel -->
+    <title>Open House 2026 | Photobooth AI</title>
+    
+    <!-- Robust Firebase Load -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     
     <style>
-        :root { --primary: #2563eb; --dark: #0f172a; --accent: #10b981; --bg: #f8fafc; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: #1e293b; }
-        nav { background: #fff; padding: 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .btn-nav { padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; font-weight: 600; }
-        .btn-nav.active { background: var(--primary); color: #fff; }
-        .screen { display: none; padding: 1.5rem; max-width: 500px; margin: 0 auto; min-height: 90vh; flex-direction: column; }
+        :root { --primary: #2563eb; --accent: #10b981; --dark: #0f172a; --bg: #f8fafc; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: #1e293b; line-height: 1.5; }
+        
+        nav { background: #fff; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .logo { font-weight: 900; color: var(--dark); letter-spacing: -0.5px; }
+        .nav-group { display: flex; gap: 8px; }
+        .btn-nav { padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; color: #64748b; }
+        .btn-nav.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        .screen { display: none; padding: 1.5rem; max-width: 600px; margin: 0 auto; min-height: 90vh; flex-direction: column; }
         .screen.active { display: flex; }
-        .card { background: #fff; border-radius: 1.5rem; padding: 2rem; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; margin-bottom: 1rem; }
-        input { width: 100%; padding: 1rem; margin: 1rem 0; border-radius: 0.75rem; border: 2px solid #e2e8f0; font-size: 1rem; }
-        .btn-main { width: 100%; padding: 1rem; background: var(--primary); color: #fff; border: none; border-radius: 0.75rem; font-weight: 700; cursor: pointer; }
-        .wait-tag { font-size: 0.8rem; color: #64748b; font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-top: 10px; }
-        .board-tile { background: #1e293b; color: white; border-left: 5px solid var(--accent); border-radius: 1rem; padding: 1.5rem; margin: 10px; text-align: center; }
-        .list-item { background:#fff; padding:12px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
+        
+        .card { background: #fff; border-radius: 1.25rem; padding: 2rem; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; margin-bottom: 1rem; }
+        
+        /* Stats Dashboard */
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1rem; }
+        .stat-item { background: #fff; padding: 1rem; border-radius: 1rem; border: 1px solid #e2e8f0; text-align: center; }
+        .stat-label { font-size: 10px; text-transform: uppercase; color: #94a3b8; font-weight: 800; margin-bottom: 4px; }
+        .stat-val { font-size: 20px; font-weight: 900; color: var(--dark); }
+
+        input { width: 100%; padding: 1rem; margin: 1rem 0; border-radius: 0.75rem; border: 2px solid #e2e8f0; font-size: 16px; outline: none; transition: border 0.2s; }
+        input:focus { border-color: var(--primary); }
+        
+        .btn-main { width: 100%; padding: 1.1rem; background: var(--primary); color: #fff; border: none; border-radius: 0.75rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; }
+        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-top: 10px; }
+        .wait-info { background: #eff6ff; color: #1e40af; }
+        
+        #board-screen { background: #000; color: #fff; max-width: 100%; }
+        .board-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 20px; }
+        .tile { background: #111; border-left: 6px solid var(--accent); padding: 30px; border-radius: 1rem; text-align: center; }
+        
+        .list-row { background: #fff; padding: 15px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 20px; border-radius: 50px; font-size: 14px; opacity: 0; transition: 0.3s; z-index: 1000; }
+        .toast.show { opacity: 1; }
     </style>
 </head>
 <body>
 
 <nav>
-    <div style="font-weight:800;">PHOTOBOOTH AI</div>
-    <div style="display:flex; gap:5px;">
+    <div class="logo">PHOTOBOOTH AI</div>
+    <div class="nav-group">
         <button class="btn-nav active" onclick="showScreen('guest')">Join</button>
         <button class="btn-nav" onclick="tryAdmin('staff')">Staff</button>
         <button class="btn-nav" onclick="tryAdmin('board')">Board</button>
     </div>
 </nav>
 
-<div id="auth-screen" class="screen"><div class="card"><h2>🔒 Staff</h2><input type="password" id="pass-input" placeholder="Password"><button class="btn-main" onclick="verifyPass()">Unlock</button></div></div>
+<div id="auth-screen" class="screen">
+    <div class="card">
+        <h2>🔒 Staff Entry</h2>
+        <input type="password" id="pass-input" placeholder="Password">
+        <button class="btn-main" onclick="verifyPass()">Unlock System</button>
+    </div>
+</div>
 
 <div id="guest-screen" class="screen active">
     <div id="reg-view" class="card">
-        <h1>Join Queue</h1>
-        <div id="ai-wait-prediction" class="wait-tag">Calculating...</div>
-        <input type="text" id="guest-name" placeholder="Name" maxlength="15">
-        <button class="btn-main" id="join-btn" onclick="joinQueue()">Get My Number</button>
+        <h1>Join the Queue</h1>
+        <p id="ai-global-wait" class="badge wait-info">Calculating wait time...</p>
+        <input type="text" id="guest-name" placeholder="Enter your name" maxlength="15">
+        <button class="btn-main" id="join-btn" onclick="joinQueue()">Join Now</button>
     </div>
+    
     <div id="status-view" class="card" style="display:none;">
-        <p>YOUR NUMBER</p>
-        <div id="my-number" style="font-size: 5rem; font-weight: 900;">--</div>
-        <div id="my-status-msg" style="font-weight:bold;">Waiting...</div>
-        <div id="my-wait-time" class="wait-tag"></div>
-        <button class="btn-main" style="background:#f1f5f9; color:#64748b; margin-top:20px;" onclick="leaveQueue()">Leave Queue</button>
+        <div style="font-size:12px; color:#94a3b8; font-weight:800;">YOUR POSITION</div>
+        <div id="my-number" style="font-size: 80px; font-weight: 900; line-height:1; margin:10px 0;">--</div>
+        <div id="my-status-label" class="badge wait-info">Waiting</div>
+        <p id="my-wait-est" style="margin-top:20px; font-weight:600; color:#475569;"></p>
+        <button class="btn-main" style="margin-top:2rem; background:#f1f5f9; color:#64748b;" onclick="leaveQueue()">Leave Queue</button>
     </div>
 </div>
 
 <div id="staff-screen" class="screen">
-    <div class="card">
-        <div id="ai-performance" style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 10px;">Booth Speed: --</div>
-        <button class="btn-main" onclick="callNext()">CALL NEXT GUEST ▶</button>
-        <div id="qrcode" style="display:flex; justify-content:center; margin-top:15px;"></div>
+    <div class="stats-row">
+        <div class="stat-item"><div class="stat-label">Waiting</div><div id="stat-wait" class="stat-val">0</div></div>
+        <div class="stat-item"><div class="stat-label">Ready</div><div id="stat-ready" class="stat-val" style="color:var(--accent)">0</div></div>
+        <div class="stat-item"><div class="stat-label">Avg Min</div><div id="stat-avg" class="stat-val">3.0</div></div>
     </div>
-    <div id="staff-list"></div>
-    <button onclick="resetAllData()" style="color:#ccc; background:none; border:none; font-size:10px; margin-top:20px; width:100%;">Factory Reset Event</button>
+    <div class="card">
+        <button class="btn-main" onclick="callNext()" style="font-size:1.2rem;">CALL NEXT GUEST ▶</button>
+        <div id="qrcode" style="display:flex; justify-content:center; margin-top:20px;"></div>
+    </div>
+    <div id="staff-list" style="border-radius:1rem; overflow:hidden; border:1px solid #e2e8f0;"></div>
+    <p onclick="resetAllData()" style="text-align:center; color:#cbd5e1; font-size:10px; margin-top:30px; cursor:pointer;">FACTORY RESET DATABASE</p>
 </div>
 
 <div id="board-screen" class="screen">
-    <div style="text-align:center; padding:2rem; color:var(--dark);"><h1>NOW SERVING</h1></div>
-    <div id="board-grid"></div>
+    <div style="text-align:center; padding:3rem;"><h1 style="font-size:3rem; font-weight:900;">NOW SERVING</h1></div>
+    <div id="board-grid" class="board-grid"></div>
 </div>
 
+<div id="toast" class="toast"></div>
+
 <script>
-// --- CONFIG (FIXED FOR GITHUB/VERCEL) ---
-const HIDDEN_KEY = "b3BlbmhvdXNlMjAyNg=="; // openhouse2026
+// --- CONFIGURATION ---
+const HIDDEN_KEY = "b3BlbmhvdXNlMjAyNg=="; // password: openhouse2026
 const firebaseConfig = {
   apiKey: "AIzaSyAOVUPxOa3SNuM-JP0q1oLdlLRew-o5aqU",
   authDomain: "open-house-6336b.firebaseapp.com",
@@ -86,119 +123,200 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+
 let queue = [];
 let isAdmin = false;
-let avgTimePerPerson = 3; 
+let avgTime = 3.0; // Default wait time
 
-// --- CORE LOGIC ---
+// --- REAL-TIME ENGINE ---
 db.ref('/').on('value', snap => {
     const data = snap.val() || {};
+    
+    // 1. Process Queue
     queue = data.queue ? Object.values(data.queue).sort((a,b) => a.number - b.number) : [];
     
+    // 2. AI Wait Time Predictor (Last 5 sessions)
     if (data.history) {
-        const times = Object.values(data.history);
-        const lastFive = times.slice(-5); 
-        const sum = lastFive.reduce((a, b) => a + b, 0);
-        avgTimePerPerson = (sum / lastFive.length / 60000).toFixed(1);
+        const historyArray = Object.values(data.history);
+        const lastFive = historyArray.slice(-5);
+        const totalMs = lastFive.reduce((a, b) => a + b, 0);
+        avgTime = (totalMs / lastFive.length / 60000).toFixed(1);
     }
-    updateUI();
+    
+    refreshUI();
 });
 
 function joinQueue() {
-    const name = document.getElementById('guest-name').value.trim();
-    if (!name) return;
-    document.getElementById('join-btn').disabled = true;
+    const nameInput = document.getElementById('guest-name');
+    const name = nameInput.value.trim();
+    const btn = document.getElementById('join-btn');
+    
+    if (name.length < 2) return showToast("Enter a longer name");
+    
+    btn.disabled = true;
+    btn.innerText = "Connecting...";
 
-    db.ref('nextNum').transaction(c => (c || 1) + 1, (err, comm, snap) => {
-        if (comm) {
-            const num = snap.val() - 1;
-            const id = "ID-" + Math.random().toString(36).substr(2, 6).toUpperCase();
-            db.ref('queue/' + id).set({ id, name, number: num, status: 'waiting', joinedAt: Date.now() });
-            localStorage.setItem('pb_user_id', id);
+    // Atomically increment the ticket number
+    db.ref('nextNum').transaction(current => (current || 1) + 1, (error, committed, snapshot) => {
+        if (committed) {
+            const ticketNum = snapshot.val() - 1;
+            const uniqueId = "G-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+            
+            const guestData = {
+                id: uniqueId,
+                name: name,
+                number: ticketNum,
+                status: 'waiting',
+                ts: Date.now()
+            };
+            
+            db.ref('queue/' + uniqueId).set(guestData).then(() => {
+                localStorage.setItem('pb_user_id', uniqueId);
+                showToast("Success! You're in line.");
+            });
+        } else {
+            btn.disabled = false;
+            btn.innerText = "Join Now";
+            showToast("Error. Try again.");
         }
     });
 }
 
-function updateUI() {
+function refreshUI() {
     const myId = localStorage.getItem('pb_user_id');
     const me = queue.find(q => q.id === myId);
-    const waitingList = queue.filter(q => q.status === 'waiting');
-    const readyList = queue.filter(q => q.status === 'ready');
+    
+    const waiting = queue.filter(q => q.status === 'waiting');
+    const ready = queue.filter(q => q.status === 'ready');
 
-    const predictionText = `Est. Wait: ${Math.round(waitingList.length * avgTimePerPerson)} mins`;
-    document.getElementById('ai-wait-prediction').textContent = predictionText;
-    if(document.getElementById('ai-performance')) {
-        document.getElementById('ai-performance').textContent = `AI prediction: ~${avgTimePerPerson}m per guest`;
+    // Update Staff Stats
+    if(document.getElementById('stat-wait')) {
+        document.getElementById('stat-wait').textContent = waiting.length;
+        document.getElementById('stat-ready').textContent = ready.length;
+        document.getElementById('stat-avg').textContent = avgTime;
     }
 
+    // Update Global AI Predictor
+    document.getElementById('ai-global-wait').textContent = `Est. Wait: ${Math.round(waiting.length * avgTime)} mins`;
+
+    // Update Guest View
     if (me) {
         document.getElementById('reg-view').style.display = 'none';
         document.getElementById('status-view').style.display = 'block';
         document.getElementById('my-number').textContent = me.number;
-        const myIndex = waitingList.findIndex(q => q.id === myId);
         
         if (me.status === 'ready') {
-            document.getElementById('my-status-msg').textContent = "PROCEED TO BOOTH!";
-            document.getElementById('my-status-msg').style.color = "var(--accent)";
-            if (window.confetti) window.confetti();
+            document.getElementById('my-status-label').textContent = "READY!";
+            document.getElementById('my-status-label').className = "badge";
+            document.getElementById('my-status-label').style.background = "var(--accent)";
+            document.getElementById('my-status-label').style.color = "white";
+            document.getElementById('my-wait-est').innerHTML = "✨ <b>It's your turn!</b> ✨<br>Go to the booth now.";
+            if(!window.confettiDone) { confetti(); window.confettiDone = true; }
         } else {
-            document.getElementById('my-status-msg').textContent = "Waiting in line...";
-            document.getElementById('my-wait-time').textContent = `~${Math.round(myIndex * avgTimePerPerson)} mins left`;
+            const pos = waiting.findIndex(q => q.id === myId);
+            document.getElementById('my-wait-est').textContent = `Est. ${Math.round(pos * avgTime)} mins remaining (${pos} people ahead)`;
         }
     }
 
+    // Update Staff List
     document.getElementById('staff-list').innerHTML = queue.map(q => `
-        <div class="list-item">
-            <span>#${q.number} <b>${q.name}</b></span>
-            ${q.status === 'ready' ? 
-                `<button onclick="finish('${q.id}')" style="background:var(--accent); color:white; border:none; padding:5px 12px; border-radius:8px; cursor:pointer;">DONE</button>` : 
-                `<button onclick="removeGuest('${q.id}')" style="background:#eee; border:none; padding:5px 12px; border-radius:8px; cursor:pointer;">DEL</button>`}
+        <div class="list-row">
+            <div><span style="font-weight:900; color:var(--primary); margin-right:10px;">#${q.number}</span> <b>${q.name}</b></div>
+            <div style="display:flex; gap:10px;">
+                ${q.status === 'ready' ? 
+                    `<button class="btn-nav" style="background:var(--accent); color:white; border:none;" onclick="finishGuest('${q.id}')">FINISH</button>` : 
+                    `<button class="btn-nav" onclick="removeGuest('${q.id}')">REMOVE</button>`
+                }
+            </div>
         </div>
-    `).join('');
+    `).join('') || '<div style="padding:40px; text-align:center; color:#cbd5e1;">Queue is currently empty.</div>';
 
-    document.getElementById('board-grid').innerHTML = readyList.map(q => `
-        <div class="board-tile"><h1>${q.number}</h1><p>${q.name}</p></div>
+    // Update Board
+    document.getElementById('board-grid').innerHTML = ready.map(q => `
+        <div class="tile">
+            <div style="font-size:80px; font-weight:900; color:var(--accent); line-height:1;">${q.number}</div>
+            <div style="font-size:20px; font-weight:700; margin-top:10px; text-transform:uppercase;">${q.name}</div>
+        </div>
     `).join('');
 }
 
+// --- STAFF ACTIONS ---
 function callNext() {
-    const next = queue.find(q => q.status === 'waiting');
-    if (next) {
-        db.ref('queue/' + next.id).update({ status: 'ready', calledAt: Date.now() });
+    const nextInLine = queue.find(q => q.status === 'waiting');
+    if (nextInLine) {
+        db.ref('queue/' + nextInLine.id).update({ 
+            status: 'ready',
+            calledAt: Date.now() 
+        });
+    } else {
+        showToast("No guests in line!");
     }
 }
 
-function finish(id) {
+function finishGuest(id) {
     const guest = queue.find(q => q.id === id);
     if (guest && guest.calledAt) {
-        const sessionLength = Date.now() - guest.calledAt;
-        db.ref('history').push(sessionLength);
+        const duration = Date.now() - guest.calledAt;
+        db.ref('history').push(duration);
     }
     db.ref('queue/' + id).remove();
 }
 
-function removeGuest(id) { db.ref('queue/' + id).remove(); }
+function removeGuest(id) {
+    db.ref('queue/' + id).remove();
+}
+
 function leaveQueue() {
     const id = localStorage.getItem('pb_user_id');
     if (id) removeGuest(id);
     localStorage.removeItem('pb_user_id');
     location.reload();
 }
-function tryAdmin(t) { pendingTarget = t; isAdmin ? showScreen(t) : showScreen('auth'); }
+
+// --- ADMIN & NAVIGATION ---
 function verifyPass() {
-    if (btoa(document.getElementById('pass-input').value) === HIDDEN_KEY) {
-        isAdmin = true; showScreen(pendingTarget);
-    } else { alert("Wrong password"); }
+    const input = document.getElementById('pass-input').value;
+    if (btoa(input) === HIDDEN_KEY) {
+        isAdmin = true;
+        showScreen(pendingTarget);
+        document.getElementById('pass-input').value = "";
+    } else {
+        showToast("Access Denied");
+    }
 }
+
+function tryAdmin(target) {
+    pendingTarget = target;
+    isAdmin ? showScreen(target) : showScreen('auth');
+}
+
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id + '-screen').classList.add('active');
-    if(id === 'staff') {
+    
+    // Update nav buttons
+    document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
+    if(id === 'guest') document.querySelector('.btn-nav:nth-child(1)').classList.add('active');
+    
+    if (id === 'staff') {
         document.getElementById('qrcode').innerHTML = "";
         new QRCode(document.getElementById('qrcode'), { text: window.location.href, width: 120, height: 120 });
     }
 }
-function resetAllData() { if(confirm("Wipe everything?")) db.ref('/').set({ nextNum: 1 }); }
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function resetAllData() {
+    if(confirm("DANGER: This will wipe all names and reset the number to 1. Continue?")) {
+        db.ref('/').set({ nextNum: 1 });
+        localStorage.clear();
+        location.reload();
+    }
+}
 </script>
 </body>
 </html>
