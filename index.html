@@ -271,11 +271,37 @@ function updateUI() {
 function joinQueue() {
     const name = document.getElementById('guest-name').value.trim();
     if(!name) return;
-    db.ref('nextNum').transaction(c => (c || 1) + 1, (err, comm, snap) => {
-        const num = snap.val() - 1;
-        const id = 'G' + Math.random().toString(36).substr(2, 5).toUpperCase();
-        db.ref('queue/'+id).set({ id, name, number: num, status: 'waiting', ts: Date.now() });
-        localStorage.setItem('pb_user_id', id);
+
+    db.ref('nextNum').transaction((current) => {
+        // If current is null or 0, start at 1
+        return (current || 1) + 1;
+    }, (err, committed, snap) => {
+        if (committed) {
+            const num = snap.val() - 1;
+            const id = 'G' + Math.random().toString(36).substr(2, 5).toUpperCase();
+            db.ref('queue/' + id).set({ 
+                id, name, number: num, status: 'waiting', ts: Date.now() 
+            });
+            localStorage.setItem('pb_user_id', id);
+        }
+    });
+}
+
+function manualAdd() {
+    const name = document.getElementById('manual-name').value.trim();
+    if(!name) return;
+
+    db.ref('nextNum').transaction((current) => {
+        return (current || 1) + 1;
+    }, (err, committed, snap) => {
+        if (committed) {
+            const num = snap.val() - 1;
+            const mid = 'M' + Date.now();
+            db.ref('queue/' + mid).set({ 
+                id: mid, name: name, number: num, status: 'waiting', ts: Date.now() 
+            });
+            document.getElementById('manual-name').value = "";
+        }
     });
 }
 function manualAdd() {
