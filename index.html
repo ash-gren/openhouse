@@ -26,12 +26,12 @@
         .card { background: white; border-radius: 1.2rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 1rem; }
 
         /* Journey Progress Bar */
-        .journey-container { position: relative; padding: 20px 0 40px 0; }
+        .journey-container { position: relative; padding: 20px 0 45px 0; margin-top: 10px; }
         .journey-track { height: 8px; background: #e2e8f0; border-radius: 10px; position: relative; }
         .journey-fill { height: 100%; background: var(--accent); border-radius: 10px; width: 0%; transition: width 1s linear; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
-        .node { position: absolute; top: -6px; width: 20px; height: 20px; background: white; border: 4px solid #cbd5e1; border-radius: 50%; transition: 0.3s; }
+        .node { position: absolute; top: -6px; width: 20px; height: 20px; background: white; border: 4px solid #cbd5e1; border-radius: 50%; transition: 0.3s; z-index: 2; }
         .node.active { border-color: var(--accent); background: var(--accent); }
-        .node-label { position: absolute; top: 25px; font-size: 9px; font-weight: 800; color: #94a3b8; white-space: nowrap; transform: translateX(-35%); text-transform: uppercase; }
+        .node-label { position: absolute; top: 25px; font-size: 8px; font-weight: 900; color: #94a3b8; white-space: nowrap; transform: translateX(-40%); text-transform: uppercase; letter-spacing: 0.5px; }
         .node.active + .node-label { color: var(--dark); }
 
         .big-num { font-size: 7rem; font-weight: 900; color: var(--primary); line-height: 1; margin: 10px 0; }
@@ -71,10 +71,9 @@
         <div class="journey-container">
             <div class="journey-track">
                 <div id="journey-fill" class="journey-fill"></div>
-                <!-- Nodes -->
-                <div class="node active" style="left: 0%"><span class="node-label">Queue</span></div>
-                <div class="node" id="n1" style="left: 33%"><span class="node-label">Prep</span></div>
-                <div class="node" id="n2" style="left: 66%"><span class="node-label">Shoot</span></div>
+                <div class="node active" style="left: 0%"><span class="node-label">Photo Taken</span></div>
+                <div class="node" id="n1" style="left: 33%"><span class="node-label">Processing</span></div>
+                <div class="node" id="n2" style="left: 66%"><span class="node-label">Printing</span></div>
                 <div class="node" id="n3" style="left: 100%"><span class="node-label">Ready</span></div>
             </div>
         </div>
@@ -98,9 +97,30 @@
             <div id="stat-avg" style="font-size:1.5rem; font-weight:900;">2.5</div>
         </div>
     </div>
-    <button class="btn-main" style="background:var(--dark); margin-bottom:1rem;" onclick="callNext()">CALL NEXT GUEST ▶</button>
-    <div class="card" style="padding:0; overflow:hidden;"><div id="staff-list"></div></div>
-    <div style="margin-top:auto; text-align:center;"><div id="qrcode" style="display:inline-block; margin:20px;"></div></div>
+
+    <div class="card" style="border-top: 4px solid var(--dark);">
+        <h4 style="font-size:11px; margin-bottom:10px; color:#64748b;">QUICK ACTIONS</h4>
+        <button class="btn-main" style="background:var(--dark); margin-bottom:1rem;" onclick="callNext()">CALL NEXT GUEST ▶</button>
+        
+        <div style="padding:10px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0;">
+            <span style="font-size:10px; font-weight:800; display:block; margin-bottom:5px;">MANUAL ADD (WALK-IN)</span>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="manual-name" placeholder="Guest Name" style="margin:0; padding:10px; font-size:14px;">
+                <button onclick="manualAdd()" style="background:var(--accent); color:white; border:none; padding:0 15px; border-radius:10px; font-weight:700; cursor:pointer;">ADD</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="padding:0; overflow:hidden;">
+        <div style="padding:10px 15px; border-bottom:1px solid #eee; font-weight:800; font-size:11px; color:#64748b; background:#fcfcfc;">LIVE QUEUE</div>
+        <div id="staff-list" style="max-height: 35vh; overflow-y: auto;"></div>
+    </div>
+
+    <div style="margin-top:auto; text-align:center; padding-top:20px;">
+        <div id="qrcode" style="display:inline-block; padding:10px; background:white; border-radius:10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);"></div>
+        <p style="font-size:10px; color:#94a3b8; margin:10px 0;">Staff QR Code</p>
+        <button onclick="resetSystem()" style="color:var(--danger); background:none; border:none; font-size:11px; font-weight:800; cursor:pointer; padding:10px; text-decoration:underline;">⚠️ FULL SYSTEM RESET</button>
+    </div>
 </div>
 
 <!-- DISPLAY BOARD -->
@@ -158,7 +178,6 @@ db.ref('/').on('value', snap => {
     queue = data.queue ? Object.values(data.queue).sort((a,b) => a.ts - b.ts) : [];
     const history = data.history ? Object.values(data.history) : [];
     
-    // AI Average Serve Time calculation
     if(history.length > 1) {
         const samples = history.slice(-5);
         let total = 0;
@@ -177,7 +196,6 @@ function updateUI() {
     const missed = queue.filter(q => q.status === 'missed');
     const me = queue.find(q => q.id === myId);
 
-    // Header AI Prediction
     document.getElementById('ai-estimate').innerText = `Estimated Wait: ~${Math.round(waiting.length * avgServeTime)} mins`;
 
     if(me) {
@@ -192,9 +210,10 @@ function updateUI() {
         if(me.status === 'ready') {
             fill.style.width = "100%";
             document.querySelectorAll('.node').forEach(n => n.classList.add('active'));
-            inst.innerText = "IT'S YOUR TURN! GO TO BOOTH";
+            inst.innerText = "READY! PLEASE COLLECT YOUR PHOTO";
             inst.style.background = "var(--accent)"; inst.style.color = "white";
-            if(canVibrate) navigator.vibrate([400, 100, 400]);
+            
+            if(canVibrate && "vibrate" in navigator) navigator.vibrate([500, 200, 500, 200, 500]);
             if(!window.didConfetti) { confetti(); window.didConfetti = true; }
         } 
         else if (me.status === 'missed') {
@@ -202,21 +221,17 @@ function updateUI() {
             inst.style.background = "var(--danger)";
         }
         else {
-            // FAKE LOADING BAR LOGIC
-            // If pos > 1, you are in "Queue" stage (0-33%)
             if(myPos > 1) {
                 fill.style.width = "15%";
                 inst.innerText = `You are #${myPos} in line`;
+                document.getElementById('n1').classList.remove('active');
+                document.getElementById('n2').classList.remove('active');
             } else {
-                // If you are #1 in line, simulate moving through Prep/Shoot/Process
-                // We use the last time someone was "Done" to calculate progress
                 const timeInLead = (Date.now() - (window.lastDoneTime || Date.now())) / 1000;
-                const totalCycle = avgServeTime * 60; // in seconds
-                
-                let percent = 33; // Start at Prep
+                const totalCycle = avgServeTime * 60;
+                let percent = 33;
                 if(timeInLead > totalCycle * 0.3) { percent = 50; document.getElementById('n1').classList.add('active'); }
                 if(timeInLead > totalCycle * 0.6) { percent = 75; document.getElementById('n2').classList.add('active'); }
-                
                 fill.style.width = percent + "%";
                 inst.innerText = "YOU ARE NEXT! GET READY...";
                 inst.style.background = "var(--warning)";
@@ -224,7 +239,6 @@ function updateUI() {
         }
     }
 
-    // Staff and Display Board
     if(isAdmin) {
         document.getElementById('stat-wait').innerText = waiting.length;
         document.getElementById('staff-list').innerHTML = queue.map(q => `
@@ -264,6 +278,16 @@ function joinQueue() {
         localStorage.setItem('pb_user_id', id);
     });
 }
+function manualAdd() {
+    const name = document.getElementById('manual-name').value.trim();
+    if(!name) return;
+    db.ref('nextNum').transaction(c => (c || 1) + 1, (err, comm, snap) => {
+        const num = snap.val() - 1;
+        const mid = 'M' + Date.now();
+        db.ref('queue/' + mid).set({ id: mid, name: name, number: num, status: 'waiting', ts: Date.now() });
+        document.getElementById('manual-name').value = "";
+    });
+}
 function callNext() {
     const next = queue.find(q => q.status === 'waiting');
     if(next) db.ref('queue/'+next.id).update({ status: 'ready' });
@@ -283,6 +307,11 @@ function leaveQueue() {
     db.ref('queue/'+id).remove();
     localStorage.clear();
     location.reload();
+}
+function resetSystem() {
+    if(confirm("DANGER: This will wipe the entire queue and reset numbers to 1. Proceed?")) {
+        db.ref('/').set({ nextNum: 1, history: {}, queue: {} }).then(() => location.reload());
+    }
 }
 function verifyPass() {
     if(btoa(document.getElementById('pass-input').value) === HIDDEN_KEY) {
