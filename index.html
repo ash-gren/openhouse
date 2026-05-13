@@ -271,7 +271,7 @@ function leaveQueue() { 
 function resetSystem() {
     if(confirm("DANGER: WIPE EVERYTHING AND RESET TO #1?")) {
         // Hard write to overwrite transaction data
-        db.ref('/').set({ nextNum: 1, queue: 1 }).then(() => {
+        db.ref('/').set({ nextNum: 1, queue: {} }).then(() => {
             localStorage.clear();
             location.reload();
         });
