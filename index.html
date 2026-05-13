@@ -1,308 +1,314 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Open House Photobooth 2026</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-    
-    <style>
-        :root { 
-            --primary: #2563eb; --accent: #10b981; --warning: #f59e0b; 
-            --danger: #ef4444; --dark: #0f172a; --bg: #f8fafc; 
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
-        body { background: var(--bg); color: #1e293b; overflow-x: hidden; }
-        
-        nav { background: var(--dark); padding: 0.8rem 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
-        .logo { font-weight: 900; color: white; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-nav { padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; font-size: 11px; font-weight: 700; }
-        .btn-nav.active { background: var(--primary); color: white; border-color: var(--primary); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Open House Photobooth 2026</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        :root { --primary: #2563eb; --accent: #10b981; --warning: #f59e0b; --danger: #ef4444; --dark: #0f172a; --bg: #f8fafc; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: #1e293b; overflow-x: hidden; }
+        
+        nav { background: var(--dark); padding: 0.8rem 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-weight: 900; color: white; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-nav { padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; font-size: 11px; font-weight: 700; }
+        .btn-nav.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        .screen { display: none; padding: 1.2rem; width: 100%; max-width: 600px; margin: 0 auto; min-height: 90vh; }
-        .screen.active { display: flex; flex-direction: column; }
-        .card { background: white; border-radius: 1.2rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 1rem; }
+        .screen { display: none; padding: 1.2rem; width: 100%; max-width: 600px; margin: 0 auto; min-height: 90vh; }
+        .screen.active { display: flex; flex-direction: column; }
+        .card { background: white; border-radius: 1.2rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 1rem; position: relative; }
 
-        /* Stats Dashboard */
-        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1rem; }
-        .stat-card { background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; }
-        .stat-label { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; }
-        .stat-main { font-size: 1.2rem; font-weight: 900; color: var(--dark); display: block; }
+        /* JOURNEY BAR & ALIGNMENT */
+        .journey-container { position: relative; padding: 25px 35px 50px 35px; margin-top: 10px; } 
+        .journey-track { height: 10px; background: #e2e8f0; border-radius: 10px; position: relative; }
+        .journey-fill { height: 100%; background: var(--accent); border-radius: 10px; width: 0%; transition: width 1s linear; }
+        .node { position: absolute; top: -5px; width: 20px; height: 20px; background: white; border: 4px solid #cbd5e1; border-radius: 50%; z-index: 2; transition: 0.3s; }
+        .node.active { border-color: var(--accent); background: var(--accent); }
+        
+        /* Centered Node Labels */
+        .node-label { position: absolute; top: 28px; font-size: 9px; font-weight: 900; color: #94a3b8; white-space: nowrap; transform: translateX(-50%); left: 50%; text-transform: uppercase; }
+        .node.active + .node-label { color: var(--dark); }
 
-        /* Progress System */
-        .journey-container { position: relative; padding: 25px 10px 50px 10px; margin-top: 10px; } 
-        .journey-track { height: 12px; background: #e2e8f0; border-radius: 20px; position: relative; overflow: visible; }
-        .journey-fill { 
-            height: 100%; 
-            background: var(--accent); 
-            border-radius: 20px; 
-            width: 0%; 
-            transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1); 
-            position: relative;
-        }
-        .journey-fill::after {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shine 2s infinite;
-        }
-        @keyframes shine { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-
-        .node { position: absolute; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; background: white; border: 4px solid #cbd5e1; border-radius: 50%; z-index: 2; transition: 0.3s; }
-        .node.active { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
-        .node-label { position: absolute; top: 25px; font-size: 9px; font-weight: 900; color: #94a3b8; white-space: nowrap; transform: translateX(-50%); left: 50%; text-transform: uppercase; }
-        .node.active .node-label { color: var(--dark); }
-
-        .big-num { font-size: 7rem; font-weight: 900; color: var(--primary); line-height: 1; margin: 10px 0; }
-        input { width: 100%; padding: 1.1rem; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 1.1rem; margin-bottom: 1rem; outline: none; }
-        .btn-main { width: 100%; padding: 1.2rem; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
-        
-        #board-screen { max-width: 100vw; padding: 0; background: #000; color: white; }
-    </style>
+        .big-num { font-size: 7rem; font-weight: 900; color: var(--primary); line-height: 1; margin: 10px 0; }
+        input { width: 100%; padding: 1.1rem; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 1.1rem; margin-bottom: 1rem; outline: none; }
+        
+        /* Staff Action Buttons */
+        .btn-main { width: 100%; padding: 1.2rem; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
+        .btn-done { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        .btn-miss { background: var(--danger); color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        
+        #board-screen { max-width: 100vw; padding: 0; background: #000; color: white; }
+    </style>
 </head>
 <body>
 
 <nav>
-    <div class="logo">OH2026 PHOTO</div>
-    <div class="nav-group">
-        <button class="btn-nav active" id="nav-guest" onclick="showScreen('guest')">Join</button>
-        <button class="btn-nav" id="nav-staff" onclick="tryAdmin('staff')">Admin</button>
-        <button class="btn-nav" id="nav-board" onclick="tryAdmin('board')">Display</button>
-    </div>
+    <div class="logo">OPEN HOUSE 2026</div>
+    <div class="nav-group">
+        <button class="btn-nav active" id="nav-guest" onclick="showScreen('guest')">Join</button>
+        <button class="btn-nav" id="nav-staff" onclick="tryAdmin('staff')">Admin</button>
+        <button class="btn-nav" id="nav-board" onclick="tryAdmin('board')">Display</button>
+    </div>
 </nav>
 
-<!-- GUEST -->
+<!-- GUEST SCREEN -->
 <div id="guest-screen" class="screen active">
-    <div id="reg-view" class="card" style="margin-top: 2rem;">
-        <h2 style="margin-bottom:1rem">Welcome!</h2>
-        <input type="text" id="guest-name" placeholder="Enter Your Name" maxlength="15">
-        <button class="btn-main" onclick="joinQueue()">Get My Number</button>
-    </div>
-    
-    <div id="status-view" class="card" style="display:none; text-align:center;">
-        <span class="stat-label">Your Entry Number</span>
-        <h1 class="big-num" id="my-number">--</h1>
-        
-        <div class="journey-container">
-            <div class="journey-track">
-                <div id="journey-fill" class="journey-fill"></div>
-                <div class="node active" style="left: 0%"><span class="node-label">In Queue</span></div>
-                <div class="node" id="node-1" style="left: 33%"><span class="node-label">Processing</span></div>
-                <div class="node" id="node-2" style="left: 66%"><span class="node-label">Printing</span></div>
-                <div class="node" id="node-3" style="left: 100%"><span class="node-label">Ready</span></div>
-            </div>
-        </div>
+    <div style="text-align:center; padding: 10px 0;">
+        <h1 style="font-size: 1.8rem; font-weight: 900;">Photobooth</h1>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">Please keep this tab open to track your status.</p>
+    </div>
+    
+    <div id="reg-view" class="card">
+        <input type="text" id="guest-name" placeholder="Enter Your Name" maxlength="15">
+        <button class="btn-main" onclick="joinQueue()">Get My Number</button>
+    </div>
+    
+    <div id="status-view" class="card" style="display:none; text-align:center;">
+        <span style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Your Entry Number</span>
+        <h1 class="big-num" id="my-number">--</h1>
+        
+        <div class="journey-container">
+            <div class="journey-track">
+                <div id="journey-fill" class="journey-fill"></div>
+                <!-- Fixed node positions and labels inside the card boundaries -->
+                <div class="node active" style="left: 0%"><span class="node-label">Taken</span></div>
+                <div class="node" id="node-1" style="left: 33%"><span class="node-label">Processing</span></div>
+                <div class="node" id="node-2" style="left: 66%"><span class="node-label">Printing</span></div>
+                <div class="node" id="node-3" style="left: 100%"><span class="node-label">Ready</span></div>
+            </div>
+        </div>
 
-        <div id="my-instruction" style="padding:15px; font-weight:800; border-radius:12px; background:#f1f5f9; margin-top: 20px;">
-            Initializing...
-        </div>
-        <button id="vib-btn" onclick="enableVibe()" style="background:#e2e8f0; border:none; padding:8px 15px; border-radius:20px; font-size:10px; font-weight:700; margin: 15px 0;">🔔 NOTIFICATIONS OFF</button>
-    </div>
+        <div id="my-instruction" style="padding:15px; font-weight:800; border-radius:12px; background:#f1f5f9; margin-top: 20px;">Waiting...</div>
+        <button id="vib-btn" onclick="enableVibe()" style="background:#e2e8f0; border:none; padding:8px 15px; border-radius:20px; font-size:10px; font-weight:700; margin: 15px 0;">🔔 ENABLE VIBRATION</button>
+        <button onclick="leaveQueue()" style="background:none; border:none; color:#94a3b8; font-size: 11px; margin-top: 10px; cursor: pointer;">Cancel My Spot</button>
+    </div>
 </div>
 
-<!-- ADMIN -->
+<!-- STAFF/ADMIN SCREEN -->
 <div id="staff-screen" class="screen">
-    <div class="stats-row">
-        <div class="stat-card"><span class="stat-label">Waiting</span><span class="stat-main" id="stat-wait">0</span></div>
-        <div class="stat-card"><span class="stat-label">Served</span><span class="stat-main" id="stat-done">0</span></div>
-        <div class="stat-card"><span class="stat-label">Est/Person</span><span class="stat-main" id="stat-avg">--</span></div>
-    </div>
-
-    <div class="card">
-        <button class="btn-main" style="background:var(--dark); margin-bottom:1rem;" onclick="callNext()">CALL NEXT GUEST ▶</button>
-        <div style="display:flex; gap:8px;">
-            <input type="text" id="manual-name" placeholder="Manual Add" style="margin:0;">
-            <button onclick="manualAdd()" style="background:var(--accent); color:white; border:none; padding:0 20px; border-radius:12px; font-weight:800;">ADD</button>
-        </div>
-    </div>
-    <div id="staff-list"></div>
-    <button onclick="resetSystem()" style="color:var(--danger); background:none; border:none; font-size:10px; font-weight:800; padding:20px; width:100%; cursor:pointer;">RESET SYSTEM</button>
+    <div class="card">
+        <button class="btn-main" style="background:var(--dark); margin-bottom:1rem;" onclick="callNext()">CALL NEXT GUEST ▶</button>
+        <div style="display:flex; gap:8px;">
+            <input type="text" id="manual-name" placeholder="Manual Name" style="margin:0;">
+            <button onclick="manualAdd()" style="background:var(--accent); color:white; border:none; padding:0 20px; border-radius:12px; font-weight:800;">ADD</button>
+        </div>
+    </div>
+    <div class="card" style="padding:0; overflow:hidden;">
+        <div style="padding:10px; background:#f1f5f9; font-size:10px; font-weight:900; color:#64748b; border-bottom:1px solid #ddd;">LIVE QUEUE</div>
+        <div id="staff-list"></div>
+    </div>
+    <button onclick="resetSystem()" style="color:var(--danger); background:none; border:none; font-size:11px; font-weight:800; padding:20px; width:100%; cursor:pointer; text-decoration: underline;">⚠️ FULL SYSTEM RESET</button>
 </div>
 
-<!-- DISPLAY -->
+<!-- TV DISPLAY SCREEN -->
 <div id="board-screen" class="screen">
-    <div style="display: flex; height: 95vh; gap: 20px; padding: 20px;">
-        <div style="flex: 2; background: #111; border-radius: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 4px solid #334155;">
-            <h2 style="color: #64748b; font-size: 2rem;">READY FOR PICKUP</h2>
-            <div id="board-grid"></div>
-        </div>
-        <div style="flex: 1; background: #1e293b; border-radius: 2rem; padding: 2rem;">
-            <h3 style="color: #ef4444; font-size: 1.5rem; margin-bottom: 20px;">MISSED</h3>
-            <div id="missed-list"></div>
-        </div>
-    </div>
+    <div style="display: flex; height: 90vh; gap: 20px; padding: 20px;">
+        <div style="flex: 2; background: #111; border-radius: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 4px solid #334155;">
+            <h2 style="color: #64748b; font-size: 2rem;">PHOTO READY</h2>
+            <div id="board-grid" style="text-align: center;"></div>
+        </div>
+        <div style="flex: 1; background: #1e293b; border-radius: 2rem; padding: 2rem;">
+            <h3 style="color: #ef4444; font-size: 1.5rem; margin-bottom: 20px;">MISSED</h3>
+            <div id="missed-list"></div>
+        </div>
+    </div>
 </div>
 
-<!-- AUTH -->
+<!-- AUTHENTICATION -->
 <div id="auth-screen" class="screen">
-    <div class="card">
-        <h3 style="text-align:center; margin-bottom:1rem;">Staff Access</h3>
-        <input type="password" id="pass-input" placeholder="Password">
-        <button class="btn-main" onclick="verifyPass()">Login</button>
-    </div>
+    <div class="card">
+        <h3 style="text-align:center; margin-bottom:1rem;">Admin Login</h3>
+        <input type="password" id="pass-input" placeholder="Password">
+        <button class="btn-main" onclick="verifyPass()">Login</button>
+    </div>
 </div>
 
 <script>
-// --- FIREBASE ---
+// --- FIREBASE SETUP ---
 const firebaseConfig = {
-    apiKey: "AIzaSyAOVUPxOa3SNuM-JP0q1oLdlLRew-o5aqU",
-    authDomain: "open-house-6336b.firebaseapp.com",
-    databaseURL: "https://open-house-6336b-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "open-house-6336b",
-    storageBucket: "open-house-6336b.firebasestorage.app",
-    messagingSenderId: "246123974423",
-    appId: "1:246123974423:web:b1fa9bd575e3b6ac903152"
+  apiKey: "AIzaSyAOVUPxOa3SNuM-JP0q1oLdlLRew-o5aqU",
+  authDomain: "open-house-6336b.firebaseapp.com",
+  databaseURL: "https://open-house-6336b-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "open-house-6336b",
+  storageBucket: "open-house-6336b.firebasestorage.app",
+  messagingSenderId: "246123974423",
+  appId: "1:246123974423:web:b1fa9bd575e3b6ac903152"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 let queue = [], isAdmin = false, canVibrate = false;
-let globalStats = { served: 0, avgWaitSec: 120 };
 
-// --- SYNC ---
+// --- CORE SYNC ---
 db.ref('/').on('value', snap => {
-    const data = snap.val() || {};
-    queue = data.queue ? Object.values(data.queue).sort((a,b) => a.ts - b.ts) : [];
-    globalStats = data.stats || { served: 0, avgWaitSec: 120 };
-    updateUI();
+    const data = snap.val() || {};
+    queue = data.queue ? Object.values(data.queue).sort((a,b) => a.ts - b.ts) : [];
+    updateUI();
 });
 
 function updateUI() {
-    const myId = localStorage.getItem('pb_user_id');
-    const waiting = queue.filter(q => q.status === 'waiting');
-    const me = queue.find(q => q.id === myId);
+    const myId = localStorage.getItem('pb_user_id');
+    const waiting = queue.filter(q => q.status === 'waiting');
+    const me = queue.find(q => q.id === myId);
 
-    // Guest View Logic
-    if(me) {
-        document.getElementById('reg-view').style.display = 'none';
-        document.getElementById('status-view').style.display = 'block';
-        document.getElementById('my-number').innerText = me.number;
-        
-        const fill = document.getElementById('journey-fill');
-        const inst = document.getElementById('my-instruction');
+    // GUEST UI LOGIC
+    if(me) {
+        document.getElementById('reg-view').style.display = 'none';
+        document.getElementById('status-view').style.display = 'block';
+        document.getElementById('my-number').innerText = me.number;
+        
+        const fill = document.getElementById('journey-fill');
+        const inst = document.getElementById('my-instruction');
 
-        if(me.status === 'ready') {
-            fill.style.width = "100%";
-            [1,2,3].forEach(i => document.getElementById('node-'+i).classList.add('active'));
-            inst.innerHTML = "📸 PHOTO READY!<br><small>Please proceed to the booth</small>";
-            inst.style.background = "var(--accent)"; inst.style.color="white";
-            if(canVibrate) navigator.vibrate([500, 100, 500]);
-        } else if (me.status === 'missed') {
-            fill.style.width = "0%";
-            inst.innerText = "WE MISSED YOU! SEE STAFF";
-            inst.style.background = "var(--danger)"; inst.style.color="white";
-        } else {
-            const myPos = waiting.findIndex(x => x.id === myId);
-            const totalWaitSec = (myPos + 1) * globalStats.avgWaitSec;
-            const mins = Math.max(1, Math.ceil(totalWaitSec / 60));
-            
-            // Dynamic Progress: 10% base, 33% if next in line
-            fill.style.width = myPos === 0 ? "33%" : "10%";
-            inst.innerHTML = `POSITION: ${myPos + 1} <br> <small>Estimated Wait: ~${mins} min${mins > 1 ? 's' : ''}</small>`;
-            inst.style.background = "#f1f5f9"; inst.style.color="#1e293b";
-            [1,2,3].forEach(i => document.getElementById('node-'+i).classList.remove('active'));
-        }
-    }
+        if(me.status === 'ready') {
+            fill.style.width = "100%";
+            [1,2,3].forEach(i => document.getElementById('node-'+i).classList.add('active'));
+            inst.innerText = "PHOTO READY! PLEASE COLLECT";
+            inst.style.background = "var(--accent)"; inst.style.color="white";
+            if(canVibrate) navigator.vibrate([500, 200, 500]);
+        } else if (me.status === 'missed') {
+            inst.innerText = "APPROACH BOOTH FOR HELP";
+            inst.style.background = "var(--danger)"; inst.style.color="white";
+        } else {
+            const myPos = waiting.findIndex(x => x.id === myId) + 1;
+            if(myPos === 1) {
+                // Segmented Progress Logic (30s total)
+                const elapsed = (Date.now() - me.ts) / 1000;
+                const totalWait = 30; 
+                const stage = totalWait / 3;
 
-    // Admin View Logic
-    if(isAdmin) {
-        document.getElementById('stat-wait').innerText = waiting.length;
-        document.getElementById('stat-done').innerText = globalStats.served;
-        document.getElementById('stat-avg').innerText = Math.ceil(globalStats.avgWaitSec / 60) + "m";
+                let pct = Math.min(95, (elapsed / totalWait) * 100);
+                fill.style.width = pct + "%";
 
-        document.getElementById('staff-list').innerHTML = queue.map(q => `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:12px; margin-bottom:8px;">
-                <span><b>#${q.number}</b> ${q.name}</span>
-                <div style="display:flex; gap:8px;">
-                    ${q.status==='ready' ? 
-                        `<button onclick="noShow('${q.id}')" style="background:var(--danger); color:white; border:none; padding:8px; border-radius:6px; font-weight:700">MISS</button>
-                         <button onclick="finish('${q.id}')" style="background:var(--accent); color:white; border:none; padding:8px; border-radius:6px; font-weight:700">DONE</button>` : 
-                        `<button onclick="recall('${q.id}')" style="background:var(--primary); color:white; border:none; padding:8px 12px; border-radius:6px; font-weight:700">CALL</button>`}
-                </div>
-            </div>
-        `).join('');
-    }
-    
-    // Board Logic
-    document.getElementById('board-grid').innerHTML = queue.filter(q => q.status==='ready').map(q => `
-        <h1 style="font-size:10rem; color:var(--accent); line-height:1;">${q.number}</h1>
-        <p style="font-size:2rem;">${q.name}</p>
-    `).join('') || "<h1 style='color:#334155'>...</h1>";
-    
-    document.getElementById('missed-list').innerHTML = queue.filter(q => q.status==='missed').map(q => `
-        <div style="background:#334155; padding:10px; border-radius:10px; margin-bottom:10px; text-align:center;">
-            <h2 style="color:white; font-size:2.5rem;">#${q.number}</h2>
-        </div>
-    `).join('');
+                if(elapsed >= stage) document.getElementById('node-1').classList.add('active');
+                else document.getElementById('node-1').classList.remove('active');
+                
+                if(elapsed >= (stage * 2)) document.getElementById('node-2').classList.add('active');
+                else document.getElementById('node-2').classList.remove('active');
+
+                inst.innerText = "WAIT FOR IT TO REACH READY...";
+                inst.style.background = "var(--warning)"; inst.style.color="white";
+            } else {
+                fill.style.width = "5%";
+                inst.innerText = "WE WILL CALL YOU WHEN READY";
+                inst.style.background = "#f1f5f9"; inst.style.color="#1e293b";
+                [1,2,3].forEach(i => document.getElementById('node-'+i).classList.remove('active'));
+            }
+        }
+    }
+
+    // ADMIN UI LOGIC
+    if(isAdmin) {
+        document.getElementById('staff-list').innerHTML = queue.map(q => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #eee;">
+                <span><b>#${q.number}</b> ${q.name}</span>
+                <div style="display:flex; gap:10px;">
+                    ${q.status==='ready' ? 
+                        `<button class="btn-miss" onclick="noShow('${q.id}')">MISS</button>
+                         <button class="btn-done" onclick="finish('${q.id}')">DONE</button>` : 
+                        `<button class="btn-call" style="background:var(--primary); color:white; border:none; padding:8px 15px; border-radius:8px;" onclick="recall('${q.id}')">CALL</button>`}
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // BOARD UI LOGIC
+    document.getElementById('board-grid').innerHTML = queue.filter(q => q.status==='ready').map(q => `
+        <h1 style="font-size:12rem; color:var(--accent); line-height:1;">${q.number}</h1>
+        <p style="font-size:2rem; color:white;">${q.name}</p>
+    `).join('') || "<h1 style='color:#334155'>...</h1>";
+    
+    document.getElementById('missed-list').innerHTML = queue.filter(q => q.status==='missed').map(q => `
+        <div style="background:#334155; padding:10px; border-radius:10px; margin-bottom:10px; text-align:center;">
+            <h2 style="color:white; font-size:2.5rem;">#${q.number}</h2>
+        </div>
+    `).join('');
 }
 
 // --- ACTIONS ---
 function joinQueue() {
-    const name = document.getElementById('guest-name').value.trim();
-    if(!name) return;
-    db.ref('nextNum').transaction(c => (c || 1) + 1, (err, comm, snap) => {
-        const id = 'U' + Date.now();
-        db.ref('queue/' + id).set({id, name, number: snap.val() - 1, status: 'waiting', ts: Date.now()});
-        localStorage.setItem('pb_user_id', id);
-    });
+    const name = document.getElementById('guest-name').value.trim();
+    if(!name) return;
+    db.ref('nextNum').transaction(c => (c || 1) + 1, (err, comm, snap) => {
+        const id = 'U' + Date.now();
+        db.ref('queue/' + id).set({id, name, number: snap.val() - 1, status: 'waiting', ts: Date.now()});
+        localStorage.setItem('pb_user_id', id);
+        updateUI(); 
+    });
+}
+
+function manualAdd() {
+    const name = document.getElementById('manual-name').value.trim();
+    if(!name) return;
+    db.ref('nextNum').transaction(c => (c || 1) + 1, (err, comm, snap) => {
+        const id = 'M' + Date.now();
+        db.ref('queue/' + id).set({id, name, number: snap.val() - 1, status: 'waiting', ts: Date.now()});
+        document.getElementById('manual-name').value = "";
+    });
 }
 
 function callNext() {
-    const next = queue.find(q => q.status === 'waiting');
-    if(next) {
-        // Calculate new Average Wait Time
-        const sessionLength = (Date.now() - next.ts) / 1000;
-        const newAvg = (globalStats.avgWaitSec * 0.8) + (sessionLength * 0.2);
-        db.ref('stats/avgWaitSec').set(Math.max(30, newAvg));
-        db.ref('queue/' + next.id).update({status: 'ready', ts: Date.now()});
-    }
+    const n = queue.find(q => q.status === 'waiting');
+    if(n) db.ref('queue/' + n.id).update({status: 'ready', ts: Date.now()});
 }
 
-function finish(id) { 
-    db.ref('stats/served').transaction(c => (c || 0) + 1);
-    db.ref('queue/' + id).remove(); 
-}
+function finish(id) { db.ref('queue/' + id).remove(); }
 function noShow(id) { db.ref('queue/' + id).update({status: 'missed'}); }
 function recall(id) { db.ref('queue/' + id).update({status: 'ready', ts: Date.now()}); }
-
-function manualAdd() {
-    const name = document.getElementById('manual-name').value.trim();
-    if(!name) return;
-    db.ref('nextNum').transaction(c => (c || 1) + 1, (err, comm, snap) => {
-        db.ref('queue/M'+Date.now()).set({id: 'M'+Date.now(), name, number: snap.val() - 1, status: 'waiting', ts: Date.now()});
-        document.getElementById('manual-name').value = "";
-    });
+function leaveQueue() { 
+    const id = localStorage.getItem('pb_user_id');
+    if(id) db.ref('queue/' + id).remove(); 
+    localStorage.clear(); 
+    location.reload(); 
 }
 
 function resetSystem() {
-    if(confirm("DANGER: This wipes all data and resets count to #1.")) {
-        db.ref('/').set({ nextNum: 1, queue: {}, stats: {served: 0, avgWaitSec: 120} });
-    }
+    if(confirm("DANGER: WIPE EVERYTHING AND RESET TO #1?")) {
+        // Hard write to overwrite transaction data
+        db.ref('/').set({ nextNum: 1, queue: 1 }).then(() => {
+            localStorage.clear();
+            location.reload();
+        });
+    }
 }
 
+// --- NAVIGATION & AUTH ---
 function enableVibe() {
-    canVibrate = true;
-    if ("vibrate" in navigator) navigator.vibrate(200);
-    document.getElementById('vib-btn').innerText = "✅ NOTIFICATIONS ON";
+    canVibrate = true;
+    if ("vibrate" in navigator) navigator.vibrate(200);
+    document.getElementById('vib-btn').innerText = "✅ VIBRATION ON";
 }
 
-function verifyPass() { 
-    if(btoa(document.getElementById('pass-input').value) === "b3BlbmhvdXNlMjAyNg==") { 
-        isAdmin = true; showScreen(pendingScreen); 
-    } else { alert("Wrong password."); }
+function verifyPass() { 
+    // Password: openhouse2026
+    if(btoa(document.getElementById('pass-input').value) === "b3BlbmhvdXNlMjAyNg==") { 
+        isAdmin = true; 
+        showScreen(pendingScreen); 
+    } else {
+        alert("Invalid Password");
+    }
 }
 
 let pendingScreen = '';
 function tryAdmin(s) { pendingScreen = s; isAdmin ? showScreen(s) : showScreen('auth'); }
 
 function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
-    document.getElementById(id + '-screen').classList.add('active');
-    if(document.getElementById('nav-' + id)) document.getElementById('nav-' + id).classList.add('active');
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
+    document.getElementById(id + '-screen').classList.add('active');
+    if(document.getElementById('nav-' + id)) document.getElementById('nav-' + id).classList.add('active');
 }
+
+// Smooth Progress Interval
+setInterval(() => {
+    if (localStorage.getItem('pb_user_id')) updateUI();
+}, 1000);
 </script>
 </body>
 </html>
