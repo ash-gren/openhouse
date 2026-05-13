@@ -1,314 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Open House Photobooth 2026</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-    
-    <style>
-        :root { --primary: #2563eb; --accent: #10b981; --warning: #f59e0b; --danger: #ef4444; --dark: #0f172a; --bg: #f8fafc; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); color: #1e293b; overflow-x: hidden; }
-        
-        nav { background: var(--dark); padding: 0.8rem 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
-        .logo { font-weight: 900; color: white; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-nav { padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; font-size: 11px; font-weight: 700; }
-        .btn-nav.active { background: var(--primary); color: white; border-color: var(--primary); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Open House Photobooth 2026</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <style>
+        :root { --primary: #2563eb; --accent: #10b981; --warning: #f59e0b; --danger: #ef4444; --dark: #0f172a; --bg: #f8fafc; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: #1e293b; }
+        
+        nav { background: var(--dark); padding: 0.8rem 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-weight: 900; color: white; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-nav { padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; font-size: 11px; font-weight: 700; }
+        .btn-nav.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        .screen { display: none; padding: 1.2rem; width: 100%; max-width: 600px; margin: 0 auto; min-height: 90vh; }
-        .screen.active { display: flex; flex-direction: column; }
-        .card { background: white; border-radius: 1.2rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 1rem; position: relative; }
+        .screen { display: none; padding: 1.2rem; width: 100%; max-width: 600px; margin: 0 auto; min-height: 90vh; }
+        .screen.active { display: flex; flex-direction: column; }
+        .card { background: white; border-radius: 1.2rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 1rem; }
 
-        /* JOURNEY BAR & ALIGNMENT */
-        .journey-container { position: relative; padding: 25px 35px 50px 35px; margin-top: 10px; } 
-        .journey-track { height: 10px; background: #e2e8f0; border-radius: 10px; position: relative; }
-        .journey-fill { height: 100%; background: var(--accent); border-radius: 10px; width: 0%; transition: width 1s linear; }
-        .node { position: absolute; top: -5px; width: 20px; height: 20px; background: white; border: 4px solid #cbd5e1; border-radius: 50%; z-index: 2; transition: 0.3s; }
-        .node.active { border-color: var(--accent); background: var(--accent); }
-        
-        /* Centered Node Labels */
-        .node-label { position: absolute; top: 28px; font-size: 9px; font-weight: 900; color: #94a3b8; white-space: nowrap; transform: translateX(-50%); left: 50%; text-transform: uppercase; }
-        .node.active + .node-label { color: var(--dark); }
+        /* JOURNEY BAR - STRUCTURAL FIX */
+        .journey-container { position: relative; padding: 45px 20px; margin: 10px 0; } 
+        .journey-track { height: 6px; background: #e2e8f0; border-radius: 10px; position: relative; width: 100%; z-index: 1; }
+        .journey-fill { height: 100%; background: var(--accent); border-radius: 10px; width: 0%; transition: width 0.8s ease; position: absolute; top:0; left:0; z-index: 2; }
+        
+        .node { 
+            position: absolute; 
+            top: 50%; 
+            transform: translate(-50%, -50%); 
+            width: 22px; 
+            height: 22px; 
+            background: white; 
+            border: 4px solid #cbd5e1; 
+            border-radius: 50%; 
+            z-index: 10; 
+            transition: all 0.3s ease;
+        }
+        .node.active { border-color: var(--accent); background: var(--accent); }
+        
+        .node-label { position: absolute; top: 28px; font-size: 9px; font-weight: 900; color: #94a3b8; white-space: nowrap; left: 50%; transform: translateX(-50%); text-transform: uppercase; }
+        .node.active .node-label { color: var(--dark); }
 
-        .big-num { font-size: 7rem; font-weight: 900; color: var(--primary); line-height: 1; margin: 10px 0; }
-        input { width: 100%; padding: 1.1rem; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 1.1rem; margin-bottom: 1rem; outline: none; }
-        
-        /* Staff Action Buttons */
-        .btn-main { width: 100%; padding: 1.2rem; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
-        .btn-done { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; }
-        .btn-miss { background: var(--danger); color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; }
-        
-        #board-screen { max-width: 100vw; padding: 0; background: #000; color: white; }
-    </style>
+        .big-num { font-size: 7rem; font-weight: 900; color: var(--primary); line-height: 1; margin: 10px 0; letter-spacing: -2px; }
+        input { width: 100%; padding: 1.1rem; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 1.1rem; margin-bottom: 1rem; outline: none; }
+        .btn-main { width: 100%; padding: 1.2rem; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+        .stat-box { background: white; padding: 12px 5px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; }
+        .stat-val { display: block; font-size: 1.3rem; font-weight: 900; color: var(--primary); }
+        .stat-lab { font-size: 8px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+    </style>
 </head>
 <body>
 
 <nav>
-    <div class="logo">OPEN HOUSE 2026</div>
-    <div class="nav-group">
-        <button class="btn-nav active" id="nav-guest" onclick="showScreen('guest')">Join</button>
-        <button class="btn-nav" id="nav-staff" onclick="tryAdmin('staff')">Admin</button>
-        <button class="btn-nav" id="nav-board" onclick="tryAdmin('board')">Display</button>
-    </div>
+    <div class="logo">OPEN HOUSE 2026</div>
+    <div class="nav-group">
+        <button class="btn-nav active" id="nav-guest" onclick="showScreen('guest')">Join</button>
+        <button class="btn-nav" id="nav-staff" onclick="tryAdmin('staff')">Admin</button>
+        <button class="btn-nav" id="nav-board" onclick="tryAdmin('board')">Display</button>
+    </div>
 </nav>
 
-<!-- GUEST SCREEN -->
 <div id="guest-screen" class="screen active">
-    <div style="text-align:center; padding: 10px 0;">
-        <h1 style="font-size: 1.8rem; font-weight: 900;">Photobooth</h1>
-        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">Please keep this tab open to track your status.</p>
-    </div>
-    
-    <div id="reg-view" class="card">
-        <input type="text" id="guest-name" placeholder="Enter Your Name" maxlength="15">
-        <button class="btn-main" onclick="joinQueue()">Get My Number</button>
-    </div>
-    
-    <div id="status-view" class="card" style="display:none; text-align:center;">
-        <span style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Your Entry Number</span>
-        <h1 class="big-num" id="my-number">--</h1>
-        
-        <div class="journey-container">
-            <div class="journey-track">
-                <div id="journey-fill" class="journey-fill"></div>
-                <!-- Fixed node positions and labels inside the card boundaries -->
-                <div class="node active" style="left: 0%"><span class="node-label">Taken</span></div>
-                <div class="node" id="node-1" style="left: 33%"><span class="node-label">Processing</span></div>
-                <div class="node" id="node-2" style="left: 66%"><span class="node-label">Printing</span></div>
-                <div class="node" id="node-3" style="left: 100%"><span class="node-label">Ready</span></div>
-            </div>
-        </div>
-
-        <div id="my-instruction" style="padding:15px; font-weight:800; border-radius:12px; background:#f1f5f9; margin-top: 20px;">Waiting...</div>
-        <button id="vib-btn" onclick="enableVibe()" style="background:#e2e8f0; border:none; padding:8px 15px; border-radius:20px; font-size:10px; font-weight:700; margin: 15px 0;">🔔 ENABLE VIBRATION</button>
-        <button onclick="leaveQueue()" style="background:none; border:none; color:#94a3b8; font-size: 11px; margin-top: 10px; cursor: pointer;">Cancel My Spot</button>
-    </div>
+    <div id="reg-view" class="card">
+        <h2 style="margin-bottom:1rem; text-align:center;">Join Photobooth</h2>
+        <input type="text" id="guest-name" placeholder="Enter Your Name" maxlength="15">
+        <button class="btn-main" onclick="joinQueue()">Get My Number</button>
+    </div>
+    
+    <div id="status-view" class="card" style="display:none; text-align:center;">
+        <h1 class="big-num" id="my-number">--</h1>
+        <div class="journey-container">
+            <div class="journey-track">
+                <div id="journey-fill" class="journey-fill"></div>
+                <div class="node active" style="left: 0%"><span class="node-label">Queued</span></div>
+                <div class="node" id="node-1" style="left: 33%"><span class="node-label">Processing</span></div>
+                <div class="node" id="node-2" style="left: 66%"><span class="node-label">Printing</span></div>
+                <div class="node" id="node-3" style="left: 100%"><span class="node-label">Ready</span></div>
+            </div>
+        </div>
+        <div id="my-instruction" style="padding:15px; font-weight:800; border-radius:12px; background:#f1f5f9; margin-top: 20px;">Waiting...</div>
+        <button id="vib-btn" onclick="enableVibe()" style="background:#e2e8f0; border:none; padding:8px 15px; border-radius:20px; font-size:10px; font-weight:700; margin: 15px 0;">🔔 ENABLE VIBRATION</button>
+        <button id="stop-vib-btn" onclick="stopVibe()" style="display:none; width:100%; padding:1rem; background:var(--danger); color:white; border:none; border-radius:12px; font-weight:900; margin-top:10px;">🛑 STOP VIBRATION</button>
+        <button id="cancel-btn" onclick="leaveQueue()" style="background:none; border:none; color:#94a3b8; font-size: 11px; margin-top: 10px; cursor: pointer;">Cancel My Spot</button>
+    </div>
 </div>
 
-<!-- STAFF/ADMIN SCREEN -->
 <div id="staff-screen" class="screen">
-    <div class="card">
-        <button class="btn-main" style="background:var(--dark); margin-bottom:1rem;" onclick="callNext()">CALL NEXT GUEST ▶</button>
-        <div style="display:flex; gap:8px;">
-            <input type="text" id="manual-name" placeholder="Manual Name" style="margin:0;">
-            <button onclick="manualAdd()" style="background:var(--accent); color:white; border:none; padding:0 20px; border-radius:12px; font-weight:800;">ADD</button>
-        </div>
-    </div>
-    <div class="card" style="padding:0; overflow:hidden;">
-        <div style="padding:10px; background:#f1f5f9; font-size:10px; font-weight:900; color:#64748b; border-bottom:1px solid #ddd;">LIVE QUEUE</div>
-        <div id="staff-list"></div>
-    </div>
-    <button onclick="resetSystem()" style="color:var(--danger); background:none; border:none; font-size:11px; font-weight:800; padding:20px; width:100%; cursor:pointer; text-decoration: underline;">⚠️ FULL SYSTEM RESET</button>
+    <div class="stats-grid">
+        <div class="stat-box"><span class="stat-val" id="stat-waiting">0</span><span class="stat-lab">Waiting</span></div>
+        <div class="stat-box"><span class="stat-val" id="stat-ready">0</span><span class="stat-lab">Ready</span></div>
+        <div class="stat-box"><span class="stat-val" id="stat-time">0m</span><span class="stat-lab">Avg Wait</span></div>
+    </div>
+    <div class="card">
+        <button class="btn-main" style="background:var(--dark); margin-bottom:1rem;" onclick="callNext()">CALL NEXT ▶</button>
+        <div style="display:flex; gap:8px;">
+            <input type="text" id="manual-name" placeholder="Manual Name" style="margin:0;">
+            <button onclick="manualAdd()" style="background:var(--accent); color:white; border:none; padding:0 20px; border-radius:12px; font-weight:800; cursor:pointer;">ADD</button>
+        </div>
+    </div>
+    <div class="card" style="padding:0; overflow:hidden;"><div id="staff-list"></div></div>
+    <button onclick="resetSystem()" style="color:var(--danger); background:none; border:none; font-size:11px; font-weight:800; padding:20px; width:100%; cursor:pointer;">⚠️ RESET ENTIRE SYSTEM</button>
 </div>
 
-<!-- TV DISPLAY SCREEN -->
-<div id="board-screen" class="screen">
-    <div style="display: flex; height: 90vh; gap: 20px; padding: 20px;">
-        <div style="flex: 2; background: #111; border-radius: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 4px solid #334155;">
-            <h2 style="color: #64748b; font-size: 2rem;">PHOTO READY</h2>
-            <div id="board-grid" style="text-align: center;"></div>
-        </div>
-        <div style="flex: 1; background: #1e293b; border-radius: 2rem; padding: 2rem;">
-            <h3 style="color: #ef4444; font-size: 1.5rem; margin-bottom: 20px;">MISSED</h3>
-            <div id="missed-list"></div>
-        </div>
-    </div>
+<div id="board-screen" class="screen" style="max-width:100vw; background:#000;">
+    <div style="height:90vh; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white;">
+        <h2 style="color:var(--accent);">NOW READY</h2>
+        <div id="board-grid" style="font-size:15rem; font-weight:900;">---</div>
+    </div>
 </div>
 
-<!-- AUTHENTICATION -->
 <div id="auth-screen" class="screen">
-    <div class="card">
-        <h3 style="text-align:center; margin-bottom:1rem;">Admin Login</h3>
-        <input type="password" id="pass-input" placeholder="Password">
-        <button class="btn-main" onclick="verifyPass()">Login</button>
-    </div>
+    <div class="card"><input type="password" id="pass-input" placeholder="Password"><button class="btn-main" onclick="verifyPass()">Login</button></div>
 </div>
 
 <script>
-// --- FIREBASE SETUP ---
 const firebaseConfig = {
-  apiKey: "AIzaSyAOVUPxOa3SNuM-JP0q1oLdlLRew-o5aqU",
-  authDomain: "open-house-6336b.firebaseapp.com",
-  databaseURL: "https://open-house-6336b-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "open-house-6336b",
-  storageBucket: "open-house-6336b.firebasestorage.app",
-  messagingSenderId: "246123974423",
-  appId: "1:246123974423:web:b1fa9bd575e3b6ac903152"
+  apiKey: "AIzaSyAOVUPxOa3SNuM-JP0q1oLdlLRew-o5aqU",
+  authDomain: "open-house-6336b.firebaseapp.com",
+  databaseURL: "https://open-house-6336b-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "open-house-6336b",
+  storageBucket: "open-house-6336b.firebasestorage.app",
+  messagingSenderId: "246123974423",
+  appId: "1:246123974423:web:b1fa9bd575e3b6ac903152"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-let queue = [], isAdmin = false, canVibrate = false;
+let queue = [], isAdmin = false, canVibrate = false, vibInterval = null;
 
-// --- CORE SYNC ---
 db.ref('/').on('value', snap => {
-    const data = snap.val() || {};
-    queue = data.queue ? Object.values(data.queue).sort((a,b) => a.ts - b.ts) : [];
-    updateUI();
+    const data = snap.val() || {};
+    queue = data.queue ? Object.values(data.queue).sort((a,b) => a.ts - b.ts) : [];
+    updateUI();
 });
 
 function updateUI() {
-    const myId = localStorage.getItem('pb_user_id');
-    const waiting = queue.filter(q => q.status === 'waiting');
-    const me = queue.find(q => q.id === myId);
+    const myId = localStorage.getItem('pb_user_id');
+    const waiting = queue.filter(q => q.status === 'waiting');
+    const readyItems = queue.filter(q => q.status === 'ready');
+    const me = queue.find(q => q.id === myId);
 
-    // GUEST UI LOGIC
-    if(me) {
-        document.getElementById('reg-view').style.display = 'none';
-        document.getElementById('status-view').style.display = 'block';
-        document.getElementById('my-number').innerText = me.number;
-        
-        const fill = document.getElementById('journey-fill');
-        const inst = document.getElementById('my-instruction');
+    if(isAdmin) {
+        document.getElementById('stat-waiting').innerText = waiting.length;
+        document.getElementById('stat-ready').innerText = readyItems.length;
+        const served = queue.filter(q => q.status === 'ready' && q.calledAt);
+        if(served.length > 0) {
+            const avg = served.reduce((acc, curr) => acc + (curr.calledAt - curr.ts), 0) / served.length;
+            document.getElementById('stat-time').innerText = Math.round(avg/60000) + 'm';
+        }
+        document.getElementById('staff-list').innerHTML = queue.map(q => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #eee;">
+                <span><b>#${q.number}</b> ${q.name}</span>
+                <button style="background:${q.status==='ready'?'var(--accent)':'var(--primary)'}; color:white; border:none; padding:8px 12px; border-radius:6px;" onclick="${q.status==='ready'?'finish':'callNextID'}('${q.id}')">${q.status==='ready'?'DONE':'CALL'}</button>
+            </div>
+        `).join('');
+    }
 
-        if(me.status === 'ready') {
-            fill.style.width = "100%";
-            [1,2,3].forEach(i => document.getElementById('node-'+i).classList.add('active'));
-            inst.innerText = "PHOTO READY! PLEASE COLLECT";
-            inst.style.background = "var(--accent)"; inst.style.color="white";
-            if(canVibrate) navigator.vibrate([500, 200, 500]);
-        } else if (me.status === 'missed') {
-            inst.innerText = "APPROACH BOOTH FOR HELP";
-            inst.style.background = "var(--danger)"; inst.style.color="white";
-        } else {
-            const myPos = waiting.findIndex(x => x.id === myId) + 1;
-            if(myPos === 1) {
-                // Segmented Progress Logic (30s total)
-                const elapsed = (Date.now() - me.ts) / 1000;
-                const totalWait = 30; 
-                const stage = totalWait / 3;
-
-                let pct = Math.min(95, (elapsed / totalWait) * 100);
-                fill.style.width = pct + "%";
-
-                if(elapsed >= stage) document.getElementById('node-1').classList.add('active');
-                else document.getElementById('node-1').classList.remove('active');
-                
-                if(elapsed >= (stage * 2)) document.getElementById('node-2').classList.add('active');
-                else document.getElementById('node-2').classList.remove('active');
-
-                inst.innerText = "WAIT FOR IT TO REACH READY...";
-                inst.style.background = "var(--warning)"; inst.style.color="white";
-            } else {
-                fill.style.width = "5%";
-                inst.innerText = "WE WILL CALL YOU WHEN READY";
-                inst.style.background = "#f1f5f9"; inst.style.color="#1e293b";
-                [1,2,3].forEach(i => document.getElementById('node-'+i).classList.remove('active'));
-            }
-        }
-    }
-
-    // ADMIN UI LOGIC
-    if(isAdmin) {
-        document.getElementById('staff-list').innerHTML = queue.map(q => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #eee;">
-                <span><b>#${q.number}</b> ${q.name}</span>
-                <div style="display:flex; gap:10px;">
-                    ${q.status==='ready' ? 
-                        `<button class="btn-miss" onclick="noShow('${q.id}')">MISS</button>
-                         <button class="btn-done" onclick="finish('${q.id}')">DONE</button>` : 
-                        `<button class="btn-call" style="background:var(--primary); color:white; border:none; padding:8px 15px; border-radius:8px;" onclick="recall('${q.id}')">CALL</button>`}
-                </div>
-            </div>
-        `).join('');
-    }
-    
-    // BOARD UI LOGIC
-    document.getElementById('board-grid').innerHTML = queue.filter(q => q.status==='ready').map(q => `
-        <h1 style="font-size:12rem; color:var(--accent); line-height:1;">${q.number}</h1>
-        <p style="font-size:2rem; color:white;">${q.name}</p>
-    `).join('') || "<h1 style='color:#334155'>...</h1>";
-    
-    document.getElementById('missed-list').innerHTML = queue.filter(q => q.status==='missed').map(q => `
-        <div style="background:#334155; padding:10px; border-radius:10px; margin-bottom:10px; text-align:center;">
-            <h2 style="color:white; font-size:2.5rem;">#${q.number}</h2>
-        </div>
-    `).join('');
+    if(me) {
+        document.getElementById('reg-view').style.display = 'none';
+        document.getElementById('status-view').style.display = 'block';
+        document.getElementById('my-number').innerText = me.number;
+        const fill = document.getElementById('journey-fill');
+        const inst = document.getElementById('my-instruction');
+        if(me.status === 'ready') {
+            fill.style.width = "100%";
+            [1,2,3].forEach(i => document.getElementById('node-'+i).classList.add('active'));
+            inst.innerText = "READY! PLEASE COLLECT";
+            inst.style.background = "var(--accent)"; inst.style.color="white";
+            if(canVibrate && !vibInterval) vibInterval = setInterval(() => navigator.vibrate([500,200,500]), 2000);
+            if(canVibrate) document.getElementById('stop-vib-btn').style.display = 'block';
+        } else {
+            const pos = waiting.findIndex(x => x.id === myId) + 1;
+            fill.style.width = pos === 1 ? "66%" : "15%";
+            inst.innerText = pos === 1 ? "YOU ARE NEXT!" : "POSITION: " + pos;
+        }
+    }
+    document.getElementById('board-grid').innerText = readyItems.length > 0 ? readyItems[0].number : "---";
 }
 
-// --- ACTIONS ---
 function joinQueue() {
-    const name = document.getElementById('guest-name').value.trim();
-    if(!name) return;
-    db.ref('nextNum').transaction(c => (c || 1) + 1, (err, comm, snap) => {
-        const id = 'U' + Date.now();
-        db.ref('queue/' + id).set({id, name, number: snap.val() - 1, status: 'waiting', ts: Date.now()});
-        localStorage.setItem('pb_user_id', id);
-        updateUI(); 
-    });
+    const name = document.getElementById('guest-name').value.trim();
+    if(!name) return;
+    db.ref('nextNum').transaction(c => (c || 1) + 1, (err, comm, snap) => {
+        const id = 'U'+Date.now();
+        db.ref('queue/'+id).set({id, name, number: snap.val()-1, status:'waiting', ts: Date.now()});
+        localStorage.setItem('pb_user_id', id);
+    });
 }
 
 function manualAdd() {
-    const name = document.getElementById('manual-name').value.trim();
-    if(!name) return;
-    db.ref('nextNum').transaction(c => (c || 1) + 1, (err, comm, snap) => {
-        const id = 'M' + Date.now();
-        db.ref('queue/' + id).set({id, name, number: snap.val() - 1, status: 'waiting', ts: Date.now()});
-        document.getElementById('manual-name').value = "";
-    });
+    const name = document.getElementById('manual-name').value.trim();
+    if(!name) return;
+    db.ref('nextNum').transaction(c => (c || 1) + 1, (err, comm, snap) => {
+        const id = 'M'+Date.now();
+        db.ref('queue/'+id).set({id, name, number: snap.val()-1, status:'waiting', ts: Date.now()});
+        document.getElementById('manual-name').value = "";
+    });
 }
 
 function callNext() {
-    const n = queue.find(q => q.status === 'waiting');
-    if(n) db.ref('queue/' + n.id).update({status: 'ready', ts: Date.now()});
+    const next = queue.find(q => q.status === 'waiting');
+    if(next) db.ref('queue/'+next.id).update({status: 'ready', calledAt: Date.now()});
 }
 
-function finish(id) { db.ref('queue/' + id).remove(); }
-function noShow(id) { db.ref('queue/' + id).update({status: 'missed'}); }
-function recall(id) { db.ref('queue/' + id).update({status: 'ready', ts: Date.now()}); }
-function leaveQueue() { 
-    const id = localStorage.getItem('pb_user_id');
-    if(id) db.ref('queue/' + id).remove(); 
-    localStorage.clear(); 
-    location.reload(); 
-}
-
-function resetSystem() {
-    if(confirm("DANGER: WIPE EVERYTHING AND RESET TO #1?")) {
-        // Hard write to overwrite transaction data
-        db.ref('/').set({ nextNum: 1, queue: {} }).then(() => {
-            localStorage.clear();
-            location.reload();
-        });
-    }
-}
-
-// --- NAVIGATION & AUTH ---
-function enableVibe() {
-    canVibrate = true;
-    if ("vibrate" in navigator) navigator.vibrate(200);
-    document.getElementById('vib-btn').innerText = "✅ VIBRATION ON";
-}
-
-function verifyPass() { 
-    // Password: openhouse2026
-    if(btoa(document.getElementById('pass-input').value) === "b3BlbmhvdXNlMjAyNg==") { 
-        isAdmin = true; 
-        showScreen(pendingScreen); 
-    } else {
-        alert("Invalid Password");
-    }
-}
-
+function callNextID(id) { db.ref('queue/'+id).update({status: 'ready', calledAt: Date.now()}); }
+function finish(id) { db.ref('queue/'+id).remove(); }
+function leaveQueue() { db.ref('queue/'+localStorage.getItem('pb_user_id')).remove(); localStorage.clear(); location.reload(); }
+function resetSystem() { if(confirm("RESET ALL?")) { db.ref('/').set({ nextNum: 1, queue: {} }).then(() => { localStorage.clear(); location.reload(); }); } }
+function enableVibe() { canVibrate = true; document.getElementById('vib-btn').innerText = "VIBE ON"; }
+function stopVibe() { clearInterval(vibInterval); vibInterval = null; document.getElementById('stop-vib-btn').style.display = 'none'; }
+function verifyPass() { if(btoa(document.getElementById('pass-input').value) === "b3BlbmhvdXNlMjAyNg==") { isAdmin=true; showScreen(pendingScreen); } }
 let pendingScreen = '';
 function tryAdmin(s) { pendingScreen = s; isAdmin ? showScreen(s) : showScreen('auth'); }
-
 function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
-    document.getElementById(id + '-screen').classList.add('active');
-    if(document.getElementById('nav-' + id)) document.getElementById('nav-' + id).classList.add('active');
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id + '-screen').classList.add('active');
 }
-
-// Smooth Progress Interval
-setInterval(() => {
-    if (localStorage.getItem('pb_user_id')) updateUI();
-}, 1000);
 </script>
 </body>
 </html>
